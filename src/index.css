@@ -1,0 +1,100 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-slate-50 font-sans text-navy-800 antialiased;
+  }
+  :focus-visible {
+    @apply outline-none ring-2 ring-teal-500/50 ring-offset-1 ring-offset-white;
+  }
+  ::selection {
+    @apply bg-teal-100 text-navy-900;
+  }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #bcccdc transparent;
+  }
+}
+
+@layer utilities {
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-navy-200;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+@keyframes nexus-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.animate-fade-in {
+  animation: nexus-fade-in 0.16s ease-out both;
+}
+
+@keyframes nexus-slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(32px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.animate-slide-in-right {
+  animation: nexus-slide-in-right 0.2s ease-out both;
+}
+
+/* ---------- Leaflet ---------- */
+.leaflet-container {
+  @apply z-0 bg-slate-100 font-sans;
+}
+.leaflet-popup-content-wrapper {
+  @apply rounded-lg shadow-dropdown;
+}
+.leaflet-popup-content {
+  @apply text-[13px] leading-snug text-navy-800;
+  margin: 10px 12px;
+}
+.leaflet-bar a {
+  @apply text-navy-600;
+}
+.nexus-pin {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* ---------- React Flow ---------- */
+.react-flow__attribution {
+  @apply bg-transparent text-[10px] text-navy-300;
+}
+.react-flow__controls-button {
+  @apply border-navy-100 bg-white text-navy-500 hover:bg-slate-50;
+}
+.react-flow__node.selected .nf-node {
+  @apply ring-2 ring-teal-500;
+}
+.react-flow__edge-text {
+  @apply text-[10px];
+}
+.react-flow__edge-textbg {
+  @apply fill-white;
+}
