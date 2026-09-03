@@ -1,17 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Plus, Search, Eye, FolderOpen, Network, Archive, RotateCcw, LayoutGrid, List, X, SearchX } from 'lucide-react';
+import { Plus, Search, Eye, FolderOpen, Network, Archive, RotateCcw, LayoutGrid, List, X, SearchX, Radar } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Card, CardBody } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button, IconButton, buttonClasses } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
 import { DataTable } from '@/components/tables/DataTable';
 import { InvestigationCard } from '@/components/cards/InvestigationCard';
-import { StatusDonut } from '@/components/charts/StatusDonut';
-import { ChartCard } from '@/components/charts/ChartCard';
 import { Dropdown, DropdownItem, DropdownDivider } from '@/components/ui/Dropdown';
 import { ConfirmDialog } from '@/components/modals/ConfirmDialog';
 import { MoreHorizontal } from 'lucide-react';
@@ -43,6 +40,25 @@ const priorityOptions = [
   { value: 'medium', label: 'Medium' },
   { value: 'low', label: 'Low' },
 ];
+
+/** One filter chip. Active state is a solid ink block, as elsewhere. */
+function FilterChip({ active, onClick, children }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[12px] font-medium transition-colors duration-150',
+        active
+          ? 'border-transparent bg-surface-inverse text-action-on'
+          : 'border-line text-navy-500 hover:border-line-strong hover:text-navy-900'
+      )}
+    >
+      {children}
+    </button>
+  );
+}
 
 export function InvestigationsPage() {
   useDocumentTitle('Investigations');
@@ -164,11 +180,23 @@ export function InvestigationsPage() {
     {
       key: 'stats',
       header: 'Case data',
-      render: (inv) => (
-        <span className="text-[12px] text-navy-400">
-          {inv.stats.entities} entities · {inv.stats.evidence} evidence · {inv.stats.events} events
-        </span>
-      ),
+      /*
+       * An analysis-backed case holds no rows in the mock stores — its records
+       * live in the pipeline — so counting them here reported "0 entities · 0
+       * evidence · 0 events" for the fullest case in the product. Say where the
+       * data actually is instead of printing zeros that are not true.
+       */
+      render: (inv) =>
+        inv.analysisBackend === 'cna' ? (
+          <Badge variant="teal">
+            <Radar className="h-3 w-3" aria-hidden />
+            Live pipeline
+          </Badge>
+        ) : (
+          <span className="text-[12px] text-navy-400">
+            {inv.stats.entities} entities · {inv.stats.evidence} evidence · {inv.stats.events} events
+          </span>
+        ),
     },
     { key: 'updated', header: 'Updated', className: 'text-right', render: (inv) => <span className="text-[12px] text-navy-400">{timeAgo(inv.updatedAt)}</span> },
     {
@@ -197,6 +225,10 @@ export function InvestigationsPage() {
 
   const counts = result?.counts || { active: 0, pending_review: 0, closed: 0, archived: 0 };
   const items = result?.items || [];
+  // `total` is the filtered count; `totalAll` is the whole caseload behind the
+  // "All" chip, which must not change as filters narrow the list.
+  const total = result?.total ?? items.length;
+  const totalAll = Object.values(counts).reduce((a, b) => a + b, 0);
   const hasFilters = q || status !== 'all' || priority !== 'all';
 
   return (
@@ -232,39 +264,19 @@ export function InvestigationsPage() {
         }
       />
 
-      {/* Status chips */}
-      <div className="flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          onClick={() => setParam('status', 'all', 'all')}
-          className={cn(
-            'rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
-            status === 'all' ? 'border-navy-700 bg-navy-800 text-white' : 'border-slate-200 bg-white text-navy-500 hover:border-navy-300'
-          )}
-        >
-          All <span className="opacity-60">{result ? Object.values(counts).reduce((a, b) => a + b, 0) : '…'}</span>
-        </button>
-        {Object.entries(INVESTIGATION_STATUS).map(([key, meta]) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => setParam('status', key, 'all')}
-            className={cn(
-              'flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
-              status === key ? 'border-navy-700 bg-navy-800 text-white' : 'border-slate-200 bg-white text-navy-500 hover:border-navy-300'
-            )}
-          >
-            <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: meta.color }} aria-hidden />
-            {meta.label} <span className="opacity-60">{counts[key] ?? 0}</span>
-          </button>
-        ))}
-      </div>
+      {/*
+        One filter row.
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-4">
-        <div className="space-y-4 xl:col-span-3">
-          {/* Filter bar */}
+        Status was previously settable from both a chip row and a dropdown on
+        the same screen — two controls for one piece of state, which is a way
+        to make a page feel unpredictable. Priority is now a chip row too, so
+        filtering is one click and consistent, and the counts live on the
+        controls that set them.
+      */}
+      <Card>
+        <CardBody className="space-y-3">
           <div className="flex flex-wrap items-center gap-2.5">
-            <div className="w-full sm:w-64">
+            <div className="w-full sm:w-72">
               <Input
                 icon={Search}
                 placeholder="Search title, code, tag…"
@@ -281,17 +293,15 @@ export function InvestigationsPage() {
                 onBlur={() => setParam('q', inputValue, '')}
               />
             </div>
-            <div className="w-40">
-              <Select value={status} onChange={(e) => setParam('status', e.target.value, 'all')} options={statusOptions} aria-label="Filter by status" />
-            </div>
-            <div className="w-40">
-              <Select value={priority} onChange={(e) => setParam('priority', e.target.value, 'all')} options={priorityOptions} aria-label="Filter by priority" />
-            </div>
+            <span className="text-[12px] text-navy-400">
+              {busy ? 'Loading…' : `${items.length} of ${total} case${total === 1 ? '' : 's'}`}
+            </span>
             {hasFilters && (
               <Button
                 variant="ghost"
                 size="sm"
                 icon={X}
+                className="ml-auto"
                 onClick={() => {
                   setInputValue('');
                   setSearchParams({}, { replace: true });
@@ -302,6 +312,38 @@ export function InvestigationsPage() {
             )}
           </div>
 
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <span className="flex flex-wrap items-center gap-1.5">
+              <span className="label-micro mr-1">Status</span>
+              <FilterChip active={status === 'all'} onClick={() => setParam('status', 'all', 'all')}>
+                All <span className="figure opacity-60">{totalAll}</span>
+              </FilterChip>
+              {Object.entries(INVESTIGATION_STATUS).map(([key, meta]) => (
+                <FilterChip key={key} active={status === key} onClick={() => setParam('status', key, 'all')}>
+                  <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: meta.color }} aria-hidden />
+                  {meta.label} <span className="figure opacity-60">{counts[key] ?? 0}</span>
+                </FilterChip>
+              ))}
+            </span>
+
+            <span className="flex flex-wrap items-center gap-1.5">
+              <span className="label-micro mr-1">Priority</span>
+              <FilterChip active={priority === 'all'} onClick={() => setParam('priority', 'all', 'all')}>
+                Any
+              </FilterChip>
+              {Object.entries(PRIORITY).map(([key, meta]) => (
+                <FilterChip key={key} active={priority === key} onClick={() => setParam('priority', key, 'all')}>
+                  <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: meta.color }} aria-hidden />
+                  {meta.label}
+                </FilterChip>
+              ))}
+            </span>
+          </div>
+        </CardBody>
+      </Card>
+
+      <div>
+        <div>
           {view === 'table' ? (
             <DataTable
               columns={columns}
@@ -352,38 +394,6 @@ export function InvestigationsPage() {
           )}
         </div>
 
-        {/* Side panel */}
-        <div className="space-y-6">
-          <ChartCard title="By status" bodyClassName="pt-2">
-            <StatusDonut
-              size={150}
-              data={[
-                { label: 'Active', value: counts.active || 0, color: STATUS_COLORS.active },
-                { label: 'Pending review', value: counts.pending_review || 0, color: STATUS_COLORS.pending_review },
-                { label: 'Closed', value: counts.closed || 0, color: STATUS_COLORS.closed },
-                { label: 'Archived', value: counts.archived || 0, color: STATUS_COLORS.archived },
-              ]}
-            />
-          </ChartCard>
-
-          <ChartCard title="By priority" bodyClassName="pt-2 space-y-3">
-            {Object.entries(PRIORITY).map(([key, meta]) => {
-              const value = items.filter((i) => i.priority === key).length;
-              const pct = items.length ? Math.round((value / items.length) * 100) : 0;
-              return (
-                <div key={key}>
-                  <div className="mb-1 flex items-center justify-between text-xs">
-                    <span className="font-medium text-navy-500">{meta.label}</span>
-                    <span className="text-navy-400">{value}</span>
-                  </div>
-                  <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
-                    <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: meta.color }} />
-                  </div>
-                </div>
-              );
-            })}
-          </ChartCard>
-        </div>
       </div>
 
       <ConfirmDialog

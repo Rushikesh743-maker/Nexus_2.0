@@ -22,12 +22,12 @@ const TONE_COLOR = {
   neutral: 'var(--ink-400)',
 };
 
-export function StatCard({ label, value, sub, tone = 'accent', to, className }) {
+export function StatCard({ label, value, sub, tone = 'accent', to, onClick, className }) {
   const color = TONE_COLOR[tone] || TONE_COLOR.accent;
   const emphasised = tone !== 'accent' && tone !== 'neutral';
 
   const body = (
-    <Card className={cn('relative overflow-hidden p-4 pt-[15px]', to && 'hover-lift', className)}>
+    <Card className={cn('relative overflow-hidden p-4 pt-[15px]', (to || onClick) && 'hover-lift', className)}>
       {/* The rule is the card's only chrome, and it carries the status role. */}
       <span
         className="absolute inset-x-0 top-0 h-[2px]"
@@ -52,5 +52,16 @@ export function StatCard({ label, value, sub, tone = 'accent', to, className }) 
       </Link>
     );
   }
+
+  // A tile whose destination needs a case chosen first opens the picker rather
+  // than linking somewhere generic.
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} className="block w-full rounded-lg text-left">
+        {body}
+      </button>
+    );
+  }
+
   return body;
 }

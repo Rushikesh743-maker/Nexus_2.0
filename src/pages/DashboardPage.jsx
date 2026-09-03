@@ -1,31 +1,35 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Briefcase, FolderOpen, Share2, ClipboardCheck, Plus, ArrowRight, Database, Server, KeyRound, Globe } from 'lucide-react';
+import { Plus, ArrowRight, Database, Server, KeyRound, ScanLine } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Card, CardHeader, CardBody } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Avatar } from '@/components/ui/Avatar';
 import { buttonClasses } from '@/components/ui/Button';
 import { StatCard } from '@/components/cards/StatCard';
-import { InvestigationCard } from '@/components/cards/InvestigationCard';
 import { Table, THead, TBody, Tr, Th } from '@/components/ui/Table';
 import { Skeleton } from '@/components/ui/LoadingState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { QuickActions } from '@/components/dashboard/QuickActions';
+import { AnalysisCaseBand } from '@/components/dashboard/AnalysisCaseBand';
 import { ActivityFeed } from '@/components/dashboard/ActivityFeed';
 import { CasePickerModal } from '@/components/modals/CasePickerModal';
-import { investigationService } from '@/services';
+import { investigationService, cnaService } from '@/services';
 import { INVESTIGATION_STATUS, APP_NAME } from '@/lib/constants';
 import { useAuth } from '@/context/AuthContext';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { formatDate, timeAgo } from '@/lib/utils';
 
+/*
+ * What is actually running. These claims were stale — the analysis pipeline is
+ * connected, and the analysis map no longer fetches tiles — and a status panel
+ * that misreports the system is worse than no status panel.
+ */
 const SYSTEM_STATUS = [
   { icon: Database, label: 'Case & evidence data', value: 'Mock dataset', variant: 'warning' },
-  { icon: Server, label: 'Analysis services', value: 'Not connected', variant: 'neutral' },
   { icon: KeyRound, label: 'Identity service', value: 'Demo auth', variant: 'warning' },
-  { icon: Globe, label: 'Map tiles', value: 'OpenStreetMap', variant: 'info' },
+  { icon: ScanLine, label: 'Analysis map', value: 'Offline plot, no tiles', variant: 'info' },
 ];
 
 const PICKER_COPY = {
@@ -57,6 +61,7 @@ export function DashboardPage() {
   const [error, setError] = useState(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [picker, setPicker] = useState(null);
+  const [pipelineOnline, setPipelineOnline] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -78,13 +83,27 @@ export function DashboardPage() {
     };
   }, [reloadKey]);
 
+  // The status panel reports what it observed, not what it assumes.
+  useEffect(() => {
+    let active = true;
+    cnaService
+      .getStats()
+      .then(() => active && setPipelineOnline(true))
+      .catch(() => active && setPipelineOnline(false));
+    return () => {
+      active = false;
+    };
+  }, [reloadKey]);
+
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   const firstName = user?.name?.split(' ')[0] || '';
   const greetingName = firstName.toLowerCase() === 'demo' ? 'Investigator' : firstName || 'Investigator';
 
-  const recent = list?.items?.slice(0, 6) || [];
-  const activeCases = (list?.items || []).filter((c) => c.status === 'active' || c.status === 'pending_review').slice(0, 4);
+  const allCases = list?.items || [];
+  const analysisCase = allCases.find((c) => c.analysisBackend === 'cna') || null;
+  // The band already surfaces the analysis case, so the table shows the rest.
+  const recent = allCases.filter((c) => c.id !== analysisCase?.id).slice(0, 7);
   const loading = !stats && !error;
 
   const handlePickerSelect = (inv) => {
@@ -116,20 +135,48 @@ export function DashboardPage() {
         <>
           {/* Overview stats */}
           <section aria-label="Overview">
-            <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-navy-300">Overview</p>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
               {stats ? (
                 <>
-                  <StatCard icon={Briefcase} label="Active Investigations" value={stats.activeCases} sub={`${stats.underReview} under review`} to="/investigations" />
-                  <StatCard icon={FolderOpen} label="Evidence Items" value={stats.evidenceLogged} sub="with chain of custody" to="/investigations" />
-                  <StatCard icon={Share2} label="Entities" value={stats.entitiesTracked} sub={`${stats.relationshipsTracked} relationships mapped`} to="/investigations" />
-                  <StatCard icon={ClipboardCheck} label="Pending Reviews" value={stats.insightsPending} sub="insights awaiting analyst" to="/investigations" />
+                  {/*
+                    Each tile goes somewhere different. They previously all
+                    pointed at /investigations, so four labels offered one
+                    destination while looking like four.
+                  */}
+                  <StatCard
+                    label="Active Investigations"
+                    value={stats.activeCases}
+                    sub={`${stats.underReview} under review`}
+                    to="/investigations?status=active"
+                  />
+                  <StatCard
+                    label="Evidence Items"
+                    value={stats.evidenceLogged}
+                    sub="with chain of custody"
+                    onClick={() => setPicker('upload')}
+                  />
+                  <StatCard
+                    label="Entities"
+                    value={stats.entitiesTracked}
+                    sub={`${stats.relationshipsTracked} relationships mapped`}
+                    onClick={() => setPicker('network')}
+                  />
+                  <StatCard
+                    label="Pending Reviews"
+                    value={stats.insightsPending}
+                    sub="insights awaiting analyst"
+                    tone={stats.insightsPending > 0 ? 'warning' : 'accent'}
+                    to="/investigations?status=pending_review"
+                  />
                 </>
               ) : (
                 Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-[92px] rounded-xl" />)
               )}
             </div>
           </section>
+
+          {/* The one case running on the live pipeline, reachable directly. */}
+          {analysisCase && <AnalysisCaseBand investigation={analysisCase} />}
 
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
             {/* Main column */}
@@ -223,41 +270,6 @@ export function DashboardPage() {
                 )}
               </Card>
 
-              {/* Investigation cards */}
-              <section aria-label="Active investigations">
-                <div className="mb-3 flex items-center justify-between">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-navy-300">Active investigations</p>
-                  <Link to="/investigations?status=active" className="text-[12px] font-medium text-teal-700 hover:text-teal-800">
-                    View all
-                  </Link>
-                </div>
-                {!list ? (
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    {Array.from({ length: 2 }).map((_, i) => (
-                      <Skeleton key={i} className="h-44 rounded-xl" />
-                    ))}
-                  </div>
-                ) : activeCases.length === 0 ? (
-                  <Card>
-                    <EmptyState
-                      title="No investigations yet."
-                      description="Create an investigation and upload evidence to begin analysis."
-                      action={
-                        <Link to="/investigations/new" className={buttonClasses('primary', 'sm')}>
-                          <Plus className="mr-1 h-3.5 w-3.5" aria-hidden />
-                          Create Investigation
-                        </Link>
-                      }
-                    />
-                  </Card>
-                ) : (
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    {activeCases.map((inv) => (
-                      <InvestigationCard key={inv.id} investigation={inv} onClick={() => navigate(`/investigations/${inv.id}`)} />
-                    ))}
-                  </div>
-                )}
-              </section>
             </div>
 
             {/* Side column */}
@@ -268,6 +280,13 @@ export function DashboardPage() {
               <Card>
                 <CardHeader title="System status" subtitle={`${APP_NAME} frontend preview`} />
                 <CardBody className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <Server className="h-4 w-4 shrink-0 text-navy-300" aria-hidden />
+                    <span className="flex-1 text-[13px] text-navy-600">Analysis pipeline</span>
+                    <Badge variant={pipelineOnline === null ? 'neutral' : pipelineOnline ? 'success' : 'warning'}>
+                      {pipelineOnline === null ? 'Checking…' : pipelineOnline ? 'Connected' : 'Not running'}
+                    </Badge>
+                  </div>
                   {SYSTEM_STATUS.map((row) => (
                     <div key={row.label} className="flex items-center gap-3">
                       <row.icon className="h-4 w-4 shrink-0 text-navy-300" aria-hidden />
@@ -276,8 +295,8 @@ export function DashboardPage() {
                     </div>
                   ))}
                   <p className="pt-1 text-[11px] leading-relaxed text-navy-300">
-                    This build runs entirely on mock data. Connect the backend API to activate live case, analysis and identity
-                    services.
+                    Case management runs on mock data. The network-analysis case runs on the real pipeline in
+                    <span className="figure"> backend/</span>.
                   </p>
                 </CardBody>
               </Card>
