@@ -15,7 +15,7 @@ export function useAnalysisCase() {
 }
 
 /**
- * The eight analysis surfaces.
+ * The analysis surfaces.
  *
  * Each is bound to a number key, as in the reference console — an analyst
  * presenting a case moves between views constantly, and reaching for a number
@@ -28,6 +28,7 @@ const VIEWS = [
   { to: 'map', label: 'Map' },
   { to: 'people', label: 'Key People' },
   { to: 'patterns', label: 'Patterns' },
+  { to: 'conflicts', label: 'Conflicts' },
   { to: 'links', label: 'Links' },
   { to: 'pipeline', label: 'Sources' },
   { to: 'ask', label: 'Ask' },

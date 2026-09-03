@@ -209,7 +209,7 @@ export function IntelligencePage() {
         </div>
       )}
 
-      {tab === 'contradictions' && <ContradictionPanel investigationId={investigation.id} />}
+      {tab === 'contradictions' && <ContradictionPanel investigationId={investigation.id} analysisBackend={investigation.analysisBackend} />}
       {tab === 'hypotheses' && <HypothesisPanel investigationId={investigation.id} />}
       {tab === 'gaps' && <GapPanel investigationId={investigation.id} />}
       {tab === 'simulator' && <ImpactSimulator investigationId={investigation.id} />}

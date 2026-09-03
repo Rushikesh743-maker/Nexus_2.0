@@ -164,6 +164,20 @@ export const getFindings = (severity) => get('/findings', severity ? { severity 
 /** Links ranked by how many independent source systems support them. */
 export const getCorroboration = (minLevel = 1) => get('/corroboration', { min_level: minLevel });
 
+/**
+ * Evidence that disagrees with what the graph asserts.
+ *
+ * The reply carries both sides of every argument, the confidence revision the
+ * conflict implies, and the pairs the engine examined and deliberately did not
+ * flag — so the UI can show where the engine declined to draw a conclusion as
+ * well as where it did.
+ */
+export const getContradictions = ({ severity, type } = {}) =>
+  get('/contradictions', { severity: severity || undefined, type: type || undefined });
+
+/** One contradiction with full provenance and the source documents behind it. */
+export const getContradiction = (id) => get(`/contradictions/${encodeURIComponent(id)}`);
+
 /* ── natural language ─────────────────────────────────────────────────── */
 
 /**

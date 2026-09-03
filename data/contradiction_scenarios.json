@@ -1,0 +1,80 @@
+{
+  "_README": "SYNTHETIC DEMO/TEST DATA — NOT PART OF THE OPERATION MERIDIAN CORPUS.",
+  "_purpose": [
+    "The Operation Meridian corpus contains exactly one naturally occurring",
+    "contradiction (a subject on two cell sites 36 seconds apart). These extra",
+    "records exist so the remaining contradiction types have something real to",
+    "fire on during a demo and in the test suite.",
+    "",
+    "They are ordinary evidence records, not pre-baked contradictions. Each one",
+    "is read by the same ingestion, extraction and identity-resolution pipeline",
+    "as every other source, and the contradiction engine has to find the",
+    "conflict for itself. Deleting this file removes the findings; it does not",
+    "change any engine behaviour.",
+    "",
+    "Every record id carries a /T prefix or a CR9xxx number so synthetic rows",
+    "are identifiable at a glance in the UI and in the audit log."
+  ],
+  "_scenarios": {
+    "T01+T02": "vehicle_association_conflict — one vehicle, two subjects, 4.5h apart, no transfer record",
+    "T03": "device_conflict — a handset already attributed to Ashok Gaikwad is attributed to a different person",
+    "T04": "location_inconsistency — surveillance places a subject ~44 km from where the CDR places him minutes earlier",
+    "CR9001": "identity_conflict — a second criminal record for one subject giving a different police district"
+  },
+
+  "surveillance": [
+    {
+      "report_id": "SUR/2026/T01",
+      "observed_on": "2026-05-26T08:00:00",
+      "location": "Chembur",
+      "lat": 19.062,
+      "lon": 72.899,
+      "unit": "Anti Narcotics Cell",
+      "synthetic": true,
+      "observation": "Static observation at the Chembur junction. At 0930 hrs subject Suresh Yadav was seen alighting from vehicle MH02CD5678, which he then locked and left at the roadside. No other occupant was observed."
+    },
+    {
+      "report_id": "SUR/2026/T02",
+      "observed_on": "2026-05-26T08:00:00",
+      "location": "Kurla",
+      "lat": 19.0726,
+      "lon": 72.879,
+      "unit": "Anti Narcotics Cell",
+      "synthetic": true,
+      "observation": "Mobile surveillance in the Kurla area. At 1400 hrs subject Kiran Deshpande was observed driving vehicle MH02CD5678 towards the market. No handover of the vehicle was witnessed at any point during the deployment."
+    },
+    {
+      "report_id": "SUR/2026/T03",
+      "observed_on": "2026-05-27T08:00:00",
+      "location": "Nagpada",
+      "lat": 18.966,
+      "lon": 72.829,
+      "unit": "Crime Branch Unit III",
+      "synthetic": true,
+      "observation": "Enquiry at the Nagpada premises. The occupant identified himself as Ramesh Jadhav (mob. 9000000008) and stated that he has used that number for the past two years. The number is separately recorded against another subject in this case."
+    },
+    {
+      "report_id": "SUR/2026/T04",
+      "observed_on": "2026-05-03T08:00:00",
+      "location": "Bhiwandi Godown",
+      "lat": 19.296,
+      "lon": 73.063,
+      "unit": "Anti Narcotics Cell",
+      "synthetic": true,
+      "observation": "Static observation at the Bhiwandi Godown compound. At 0820 hrs subject Imran Qureshi was observed on foot inside the compound supervising the loading of two consignments. The subject remained within the compound throughout the observation."
+    }
+  ],
+
+  "criminal_records": [
+    {
+      "record_id": "CR9001",
+      "name": "Suresh Yadav",
+      "phone": "9000000009",
+      "prior_cases": "1",
+      "offence_categories": "NDPS s.27",
+      "active_period": "2024",
+      "police_district": "Byculla",
+      "synthetic": "true"
+    }
+  ]
+}

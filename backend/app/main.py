@@ -24,7 +24,9 @@ from .graph.analytics import NetworkAnalytics
 from .graph.anomaly import AnomalyDetector
 from .graph.store import (CypherExportStore, JsonExportStore, export_graph,
                           describe_backends)
+from .intelligence.contradiction_engine import ContradictionEngine
 from .integrations import status as integrations_status, fetch as integrations_fetch
+from .intelligence import config as intel_config
 from .nlq import QueryParser
 from .pipeline.ocr import capabilities as ocr_capabilities
 from .report import ReportBuilder
@@ -56,6 +58,8 @@ class State:
     parser = None
     reports = None
     summariser = None
+    contradictions = None
+    contradictions_skipped = None
 
 
 S = State()
@@ -69,6 +73,12 @@ def load(force=False):
         S.parser = QueryParser(S.graph)
         S.summariser = default_summariser()
         S.reports = ReportBuilder(S.graph, S.analytics, S.findings, S.summariser)
+        # Contradictions are computed once with the rest of the analysis so a
+        # given corpus always yields the same ids — nothing downstream can cite
+        # "C003" if the numbering moves between requests.
+        _engine = ContradictionEngine(S.graph)
+        S.contradictions = _engine.run_all()
+        S.contradictions_skipped = _engine.skipped
     return S
 
 
@@ -255,6 +265,72 @@ def findings(severity: str | None = None, user: Principal = Depends(current_user
     audit(user, "VIEW_FINDINGS", {"severity": severity})
     fs = load().findings
     return [f for f in fs if not severity or f["severity"] == severity]
+
+
+@app.get("/api/contradictions")
+def contradictions(severity: str | None = None, type: str | None = None,
+                   user: Principal = Depends(current_user)):
+    """
+    Evidence that disagrees with what the graph currently asserts.
+
+    Every item carries both sides of the argument and the revision it implies,
+    so the caller never receives a bare percentage. `skipped` reports the pairs
+    the engine examined and deliberately did not flag — an investigator should
+    be able to see where it declined to draw a conclusion, not only where it
+    did.
+    """
+    require(user, "graph:read")
+    audit(user, "VIEW_CONTRADICTIONS", {"severity": severity, "type": type})
+    s = load()
+    items = [c for c in s.contradictions
+             if (not severity or c["severity"] == severity)
+             and (not type or c["type"] == type)]
+    counts: dict[str, int] = {}
+    for c in s.contradictions:
+        counts[c["type"]] = counts.get(c["type"], 0) + 1
+    return {
+        "items": items,
+        "total": len(items),
+        "counts_by_type": counts,
+        "counts_by_severity": {
+            sev: len([c for c in s.contradictions if c["severity"] == sev])
+            for sev in ("high", "medium", "low")
+        },
+        "skipped": s.contradictions_skipped,
+        "config": {
+            "max_reasonable_speed_kmph": intel_config.MAX_REASONABLE_SPEED_KMPH,
+            "unusual_speed_kmph": intel_config.UNUSUAL_SPEED_KMPH,
+            "min_separation_km": intel_config.MIN_SEPARATION_KM,
+            "vehicle_window_hours": intel_config.VEHICLE_WINDOW_HOURS,
+            "stated_time_tolerance_minutes": intel_config.STATED_TIME_TOLERANCE_MINUTES,
+            "confidence_impact_cap": intel_config.CONFIDENCE_IMPACT_CAP,
+            "source_reliability": intel_config.SOURCE_RELIABILITY,
+        },
+        "disclaimer": (
+            "Contradictions are investigative leads, not conclusions. The engine "
+            "does not determine which record is correct and does not modify case "
+            "data."
+        ),
+    }
+
+
+@app.get("/api/contradictions/{contradiction_id}")
+def contradiction(contradiction_id: str, user: Principal = Depends(current_user)):
+    """One contradiction with its full provenance, for the evidence drawer."""
+    require(user, "evidence:read")
+    s = load()
+    item = next((c for c in s.contradictions if c["id"] == contradiction_id), None)
+    if not item:
+        raise HTTPException(404, "No such contradiction")
+    audit(user, "VIEW_CONTRADICTION", {"contradiction": contradiction_id})
+    # Attach the source documents behind both sides so the drawer can show the
+    # original record without a second round trip per item.
+    docs = {}
+    for row in item["supporting_evidence"] + item["contradicting_evidence"]:
+        sid = row.get("source_id")
+        if sid and sid not in docs and sid in s.graph.raw["documents"]:
+            docs[sid] = s.graph.raw["documents"][sid]
+    return {**item, "documents": docs}
 
 
 @app.get("/api/corroboration")

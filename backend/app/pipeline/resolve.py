@@ -156,6 +156,12 @@ class ResolvedEntity:
     sources: list[str] = field(default_factory=list)
     merge_evidence: list[str] = field(default_factory=list)
     attrs: dict = field(default_factory=dict)
+    # The observations this entity was built from, each still carrying the
+    # record it came from. `attrs` above is the flattened view, where a later
+    # record silently overwrites an earlier one; the contradiction engine needs
+    # to see that divergence rather than the winner, so the per-record values
+    # are kept here as well.
+    observations: list[dict] = field(default_factory=list)
 
 
 class EntityResolver:
@@ -244,6 +250,7 @@ class EntityResolver:
         entities: list[ResolvedEntity] = []
         for n, (root, idxs) in enumerate(sorted(clusters.items()), start=1):
             names, phones, accounts, vehicles, sources, attrs = [], [], [], [], [], {}
+            contributing = []
             for i in idxs:
                 o = self.obs[i]
                 names.append(o["name"])
@@ -252,6 +259,10 @@ class EntityResolver:
                 vehicles += o["vehicles"]
                 sources.append(f"{o['source_type']}:{o['source_id']}")
                 attrs.update({k2: v for k2, v in o["attrs"].items() if v not in (None, "", "-")})
+                if o["attrs"]:
+                    contributing.append({"source_id": o["source_id"],
+                                         "source_type": o["source_type"],
+                                         "name": o["name"], "attrs": dict(o["attrs"])})
             # canonical form = the longest, most complete spelling seen
             # Canonical label: the most complete name seen, preferring a Latin
             # spelling on ties. A Devanagari-only subject is transliterated for
@@ -271,6 +282,7 @@ class EntityResolver:
                 merge_evidence=sorted({d["reason"] for d in decisions
                                        if uf.find(d["key_a"]) == root}),
                 attrs=attrs,
+                observations=contributing,
             ))
         # Cross-spelling merges first: "Farid Sheikh ~ Fareed Shaikh" is the
         # decision worth auditing; "Vikram Sethi ~ Vikram Sethi, same phone" is

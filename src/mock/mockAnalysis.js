@@ -41,10 +41,12 @@ export const GAP_TEMPLATES = [
   { title: 'Device–user attribution', impact: 'Low', description: 'Handsets are linked to identities through purchase records only; usage attribution is unverified.' },
 ];
 
-export const CONTRADICTION_STATEMENT_TEMPLATES = [
-  { statement: '“…they met only once this year, at the market.”', conflict: 'Timeline does not match another recorded event.' },
-  { statement: '“…the vehicle was parked at the depot all night.”', conflict: 'Vehicle was recorded moving in the same window.' },
-];
+/**
+ * Removed: the contradiction engine is no longer mocked. Contradictions are
+ * computed by `backend/app/intelligence/contradiction_engine.py` from real
+ * evidence and served by `GET /cna-api/contradictions`. The hypothesis, gap,
+ * impact-simulator and copilot mocks above remain until those engines land.
+ */
 
 /** Static global notification feed (mock). */
 export const MOCK_NOTIFICATIONS = [
@@ -55,4 +57,4 @@ export const MOCK_NOTIFICATIONS = [
   { id: 'ntf-5', icon: 'FileText', title: 'Report generated', detail: 'Evidence index export is ready', minutesAgo: 130, to: '/investigations' },
 ];
 
-export default { HYPOTHESIS_TEMPLATES, GAP_TEMPLATES, CONTRADICTION_STATEMENT_TEMPLATES, MOCK_NOTIFICATIONS };
+export default { HYPOTHESIS_TEMPLATES, GAP_TEMPLATES, MOCK_NOTIFICATIONS };

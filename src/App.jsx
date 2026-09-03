@@ -39,6 +39,7 @@ import { KeyPeoplePage } from '@/pages/analysis/KeyPeoplePage';
 import { PatternsPage } from '@/pages/analysis/PatternsPage';
 import { LinkAnalysisPage } from '@/pages/analysis/LinkAnalysisPage';
 import { PipelinePage } from '@/pages/analysis/PipelinePage';
+import { ConflictsPage } from '@/pages/analysis/ConflictsPage';
 import { AskPage } from '@/pages/analysis/AskPage';
 import { SystemPage } from '@/pages/analysis/SystemPage';
 import { SettingsPage } from '@/pages/settings/SettingsPage';
@@ -94,6 +95,7 @@ export default function App() {
                   <Route path="map" element={<AnalysisMapPage />} />
                     <Route path="people" element={<KeyPeoplePage />} />
                     <Route path="patterns" element={<PatternsPage />} />
+                    <Route path="conflicts" element={<ConflictsPage />} />
                     <Route path="links" element={<LinkAnalysisPage />} />
                     <Route path="pipeline" element={<PipelinePage />} />
                     <Route path="ask" element={<AskPage />} />

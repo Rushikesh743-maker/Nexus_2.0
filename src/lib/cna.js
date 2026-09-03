@@ -26,6 +26,7 @@ import {
   UserCheck,
   Network,
   Lock,
+  Clock,
 } from 'lucide-react';
 
 /** Node types produced by `graph/build.py`. */
@@ -118,6 +119,48 @@ export const CNA_FINDING_TYPES = {
     question: 'Was a handset active while its registered user was recorded in judicial custody?',
   },
 };
+
+/**
+ * Contradiction types, each stated as the question the detector asks. The
+ * engine reports leads, never conclusions, so the wording stays interrogative.
+ */
+export const CNA_CONTRADICTION_TYPES = {
+  timeline_conflict: {
+    label: 'Timeline conflict',
+    icon: Clock,
+    question: 'Do two records place a subject further apart than the time between them allows?',
+  },
+  location_inconsistency: {
+    label: 'Location inconsistency',
+    icon: MapPin,
+    question: 'Do two source systems place one subject in two places at overlapping times?',
+  },
+  vehicle_association_conflict: {
+    label: 'Vehicle association conflict',
+    icon: Car,
+    question: 'Is one vehicle recorded with two subjects inside a window, with no transfer record?',
+  },
+  device_conflict: {
+    label: 'Device conflict',
+    icon: Phone,
+    question: 'Is one handset attributed to two subjects whose names do not otherwise agree?',
+  },
+  identity_conflict: {
+    label: 'Identity consistency warning',
+    icon: UserCheck,
+    question: 'Do records merged into one identity disagree on a core attribute?',
+  },
+};
+
+export function cnaContradictionType(type) {
+  return (
+    CNA_CONTRADICTION_TYPES[type] || {
+      label: String(type || '').replace(/_/g, ' '),
+      icon: ShieldAlert,
+      question: null,
+    }
+  );
+}
 
 export function cnaFindingType(type) {
   return (

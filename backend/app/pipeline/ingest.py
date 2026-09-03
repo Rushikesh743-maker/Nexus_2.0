@@ -166,8 +166,27 @@ class Ingestor:
         return best
 
     # ------------------------------------------------------------ sources
-    def load_criminal_records(self):
-        for r in _csv("criminal_records.csv"):
+    def load_contradiction_scenarios(self) -> dict:
+        """
+        Optional synthetic records used to exercise the contradiction engine.
+
+        Absent file = absent scenarios; nothing else changes. The records are
+        ordinary evidence and go through the same extraction and resolution as
+        the real corpus, so the engine still has to find the conflicts itself.
+        """
+        # Authored, not generated: it lives beside the generator in `data/`
+        # rather than in `data/raw/`, which `start.sh` regenerates and git
+        # ignores. A file placed there would vanish on a fresh checkout.
+        path = os.path.join(ROOT, "data", "contradiction_scenarios.json")
+        if not os.path.exists(path):
+            return {"surveillance": [], "criminal_records": []}
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        return {"surveillance": data.get("surveillance", []),
+                "criminal_records": data.get("criminal_records", [])}
+
+    def load_criminal_records(self, extra_rows=()):
+        for r in list(_csv("criminal_records.csv")) + list(extra_rows):
             sid = r["record_id"]
             self.documents[sid] = {"source_type": "criminal_record", "record": r}
             self.resolver.observe(
@@ -387,7 +406,10 @@ class Ingestor:
         }
         self.extractor = default_extractor(person_forms)
 
-        self.load_criminal_records()
+        scenarios = self.load_contradiction_scenarios()
+        surv = list(surv) + list(scenarios["surveillance"])
+
+        self.load_criminal_records(scenarios["criminal_records"])
         self.load_text_source(firs, "fir_id", "narrative", "fir", ts_key="registered_on")
         scanned = self.load_scanned_documents()
         if scanned:

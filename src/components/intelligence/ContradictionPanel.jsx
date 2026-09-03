@@ -14,11 +14,15 @@ import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
 /**
- * Contradiction Engine — mock presentation. Supporting vs contradicting
- * evidence per relationship, confidence revision and per-item "why is this
- * contradictory?" details. No contradiction logic runs here.
+ * Contradiction Engine — served by the real backend.
+ *
+ * The engine (`backend/app/intelligence/contradiction_engine.py`) analyses the
+ * corpus the analysis backend holds, and it is a single-case service. For a
+ * case it does not back, this panel says so rather than inventing conflicts:
+ * showing one case's real contradictions under another case's name would be
+ * worse than showing none.
  */
-export function ContradictionPanel({ investigationId }) {
+export function ContradictionPanel({ investigationId, analysisBackend }) {
   const navigate = useNavigate();
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
@@ -30,19 +34,29 @@ export function ContradictionPanel({ investigationId }) {
     let active = true;
     setError(null);
     analysisService
-      .getContradictions(investigationId)
+      .getContradictions(investigationId, { analysisBackend })
       .then((r) => active && setResult(r))
       .catch((e) => active && setError(e));
     return () => {
       active = false;
     };
-  }, [investigationId, reloadKey]);
+  }, [investigationId, analysisBackend, reloadKey]);
 
   const openEvidence = (record) =>
     navigate(`/investigations/${investigationId}/evidence?evidence=${record.id}`);
 
   if (error) return <ErrorState title="Could not load contradiction analysis" description={error.message} onRetry={() => setReloadKey((k) => k + 1)} />;
   if (!result) return <PageLoader label="Comparing evidence…" />;
+  if (result.unavailable)
+    return (
+      <Card>
+        <EmptyState
+          icon={AlertTriangle}
+          title="Contradiction analysis is not available for this case"
+          description={result.reason}
+        />
+      </Card>
+    );
   if (result.items.length === 0)
     return (
       <Card>

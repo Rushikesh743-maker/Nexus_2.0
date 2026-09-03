@@ -1,9 +1,10 @@
 import { USE_MOCK_API, api, mockLatency, clone } from './api';
-import { HYPOTHESIS_TEMPLATES, GAP_TEMPLATES, CONTRADICTION_STATEMENT_TEMPLATES, MOCK_NOTIFICATIONS } from '@/mock/mockAnalysis';
+import { HYPOTHESIS_TEMPLATES, GAP_TEMPLATES, MOCK_NOTIFICATIONS } from '@/mock/mockAnalysis';
 import * as intelligenceService from './intelligenceService';
 import * as evidenceService from './evidenceService';
 import { RELATIONSHIP_TYPES } from '@/lib/constants';
 import { hashString } from '@/lib/utils';
+import * as cnaService from './cnaService';
 
 /**
  * NEXUS Intelligence — mock analysis service.
@@ -55,43 +56,35 @@ export async function getSummary(investigationId) {
   });
 }
 
-/* ---------- Contradiction Engine (mock presentation) ---------- */
+/* ---------- Contradiction Engine (real backend) ---------- */
 
-export async function getContradictions(investigationId) {
-  if (!USE_MOCK_API) {
-    const { data } = await api.get(`/investigations/${investigationId}/analysis/contradictions`);
-    return data;
+/**
+ * Contradictions are the one intelligence surface that is no longer mocked:
+ * they are computed by `backend/app/intelligence/contradiction_engine.py` from
+ * the ingested corpus and served by `GET /cna-api/contradictions`.
+ *
+ * That engine analyses the case the analysis backend holds, and it is a
+ * single-case service. A mock investigation has no counterpart in it, so this
+ * function reports that plainly rather than returning the invented supporting
+ * and contradicting records it used to generate. Showing one case's real
+ * contradictions under another case's name would be worse than showing none.
+ *
+ * `investigation.analysisBackend === 'cna'` marks the backend-backed case; its
+ * contradictions are rendered by `pages/analysis/ConflictsPage`.
+ */
+export async function getContradictions(investigationId, { analysisBackend } = {}) {
+  if (analysisBackend !== 'cna') {
+    return clone({
+      items: [],
+      total: 0,
+      unavailable: true,
+      reason:
+        'Contradiction analysis runs in the analysis backend against its ingested corpus. ' +
+        'This case is not backed by it, so no contradictions can be computed for it.',
+    });
   }
-  await mockLatency();
-  const { rels, evidence, named } = await caseDataset(investigationId);
-  const items = rels.slice(0, 2).map((rel, i) => {
-    const names = named(rel);
-    const h = hashString(rel.id);
-    const supporting = evidence.filter((_, idx) => idx % 2 === i % 2).slice(0, 2 + (h % 2));
-    const contradicting = evidence.slice(-1);
-    const before = rel.strength;
-    return {
-      id: `con-${rel.id}`,
-      relationshipId: rel.id,
-      sourceName: names.a,
-      targetName: names.b,
-      relationshipLabel: names.label,
-      supporting: supporting.map((e) => ({ id: e.id, refNo: e.refNo, title: e.title })),
-      contradicting: contradicting.map((e, j) => ({
-        id: e.id,
-        refNo: e.refNo,
-        title: e.title,
-        source: e.title,
-        statement: CONTRADICTION_STATEMENT_TEMPLATES[(h + j) % CONTRADICTION_STATEMENT_TEMPLATES.length].statement,
-        conflict: CONTRADICTION_STATEMENT_TEMPLATES[(h + j) % CONTRADICTION_STATEMENT_TEMPLATES.length].conflict,
-        relatedRefNo: supporting[0]?.refNo || '—',
-        relatedId: supporting[0]?.id || null,
-      })),
-      confidenceBefore: before,
-      confidenceAfter: Math.max(12, before - 18 - (h % 10)),
-    };
-  });
-  return clone({ items, total: items.length });
+  const data = await cnaService.getContradictions();
+  return data;
 }
 
 /* ---------- Competing Hypotheses (mock presentation) ---------- */
