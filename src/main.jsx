@@ -1,12 +1,16 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 
-/* UI face — geometric, characterful, legible down to 11px. */
-import '@fontsource-variable/instrument-sans';
-/* Display face — editorial, used only for page titles and the wordmark. */
-import '@fontsource/instrument-serif/400.css';
-/* Figures. Every number in this product is evidence, so it gets its own face. */
-import '@fontsource-variable/jetbrains-mono';
+/*
+ * Typography matches the reference investigator console: IBM Plex Sans for
+ * body copy, IBM Plex Mono for every label, heading, figure and key hint.
+ * The mono is not decoration — it is what gives the interface its instrument
+ * character, and it keeps columns of scores and hashes aligned.
+ */
+import '@fontsource-variable/ibm-plex-sans';
+import '@fontsource/ibm-plex-mono/400.css';
+import '@fontsource/ibm-plex-mono/500.css';
+import '@fontsource/ibm-plex-mono/600.css';
 /* Devanagari coverage: the corpus carries names in both scripts. */
 import '@fontsource-variable/noto-sans-devanagari';
 

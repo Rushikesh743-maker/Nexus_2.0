@@ -1,43 +1,53 @@
 import { Link } from 'react-router-dom';
-import { ChevronRight } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { cn } from '@/lib/utils';
 
-/*
- * The icon tile is deliberately monochrome. A stat card's colour would be
- * decoration, and colour in this product is reserved for meaning — the figure
- * itself is the signal here.
+/**
+ * Headline figure.
+ *
+ * Matches the reference console: a coloured rule along the top edge, an
+ * uppercase mono label, the figure set large in the mono face, and a caption
+ * that says what produced it. No icon — in a grid of four, the icons were
+ * decoration competing with the numbers, which are the actual signal.
+ *
+ * `tone` accepts a status role ("critical", "warning", "good") for the rule
+ * and the figure, so a high-severity count reads as one at a glance.
  */
-const TILE = 'bg-slate-50 text-navy-500';
+const TONE_COLOR = {
+  accent: 'var(--accent)',
+  critical: 'var(--critical)',
+  warning: 'var(--warning)',
+  serious: 'var(--serious)',
+  good: 'var(--good)',
+  neutral: 'var(--ink-400)',
+};
 
-export function StatCard({ icon: Icon, label, value, sub, to, className }) {
+export function StatCard({ label, value, sub, tone = 'accent', to, className }) {
+  const color = TONE_COLOR[tone] || TONE_COLOR.accent;
+  const emphasised = tone !== 'accent' && tone !== 'neutral';
+
   const body = (
-    <Card
-      className={cn(
-        'flex items-start gap-3.5 p-4 transition-colors',
-        to && 'hover:border-line-strong',
-        className
-      )}
-    >
-      {Icon && (
-        <div className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-md', TILE)}>
-          <Icon className="h-4 w-4" aria-hidden />
-        </div>
-      )}
-      <div className="min-w-0 flex-1">
-        <p className="label-micro leading-[1.4]">{label}</p>
-        <p className="figure mt-1.5 text-[26px] font-semibold leading-none tracking-tight text-navy-900">
-          {value ?? '—'}
-        </p>
-        {sub && <p className="mt-1.5 text-[11.5px] leading-snug text-navy-400">{sub}</p>}
-      </div>
-      {to && <ChevronRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-navy-300" aria-hidden />}
+    <Card className={cn('relative overflow-hidden p-4 pt-[15px]', to && 'hover-lift', className)}>
+      {/* The rule is the card's only chrome, and it carries the status role. */}
+      <span
+        className="absolute inset-x-0 top-0 h-[2px]"
+        style={{ background: color }}
+        aria-hidden
+      />
+      <p className="label-micro leading-[1.4]">{label}</p>
+      <p
+        className="figure mt-2 text-[30px] font-semibold leading-none tracking-[-0.01em]"
+        style={{ color: emphasised ? color : 'var(--ink-900)' }}
+      >
+        {value ?? '—'}
+      </p>
+      {sub && <p className="mt-2 text-[11.5px] leading-snug text-navy-400">{sub}</p>}
     </Card>
   );
 
   if (to) {
     return (
-      <Link to={to} className="block focus-visible:rounded-xl">
+      <Link to={to} className="block rounded-lg">
         {body}
       </Link>
     );

@@ -10,12 +10,12 @@ import { cn } from '@/lib/utils';
  * the strongest thing on screen in both themes without a second definition.
  */
 const VARIANTS = {
-  primary: 'bg-action text-action-on hover:bg-action-hover disabled:opacity-45',
-  secondary: 'bg-action text-action-on hover:bg-action-hover disabled:opacity-45',
+  primary: 'bg-action text-action-on hover:bg-action-hover hover:shadow-glow disabled:opacity-45',
+  secondary: 'bg-action text-action-on hover:bg-action-hover hover:shadow-glow disabled:opacity-45',
   outline: 'border border-line bg-surface text-navy-700 hover:border-line-strong hover:text-navy-900',
   ghost: 'text-navy-500 hover:bg-slate-50 hover:text-navy-900',
   subtle: 'bg-slate-50 text-navy-700 hover:bg-slate-100 hover:text-navy-900',
-  accent: 'bg-accent text-accent-on hover:bg-accent-strong disabled:opacity-45',
+  accent: 'bg-accent text-accent-on hover:bg-accent-strong hover:shadow-glow disabled:opacity-45',
   danger: 'text-white hover:opacity-90 disabled:opacity-45',
 };
 
@@ -35,8 +35,8 @@ const SIZES = {
 export function buttonClasses(variant = 'primary', size = 'md', className) {
   return cn(
     'inline-flex select-none items-center justify-center whitespace-nowrap rounded-md font-medium',
-    'transition-colors duration-150 ease-instrument',
-    'disabled:pointer-events-none',
+    'transition-[background-color,box-shadow,transform,border-color,color] duration-150 ease-instrument',
+    'active:scale-[0.97] disabled:pointer-events-none disabled:active:scale-100',
     VARIANTS[variant] || VARIANTS.primary,
     SIZES[size] || SIZES.md,
     className

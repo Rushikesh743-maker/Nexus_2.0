@@ -1,21 +1,19 @@
 /**
  * NEXUS design tokens.
  * ─────────────────────────────────────────────────────────────────────────
- * Design thesis: **chrome is monochrome; colour is data.**
+ * The palette, radii and categorical series are ported from the reference
+ * investigator console (`backend/app/static/index.html`, also served at
+ * /legacy), so the React app and the no-build console read as one product
+ * rather than two skins of it.
  *
- * This product already spends colour on meaning — severity, entity type,
- * source system, corroboration. Spending it again on the interface dilutes
- * that signal, so the chrome is a warm near-monochrome ink scale and colour
- * appears only where it carries information.
+ * Character: a dark-first analytical instrument. Near-black ground, a single
+ * blue accent for interaction, and a categorical series that was validated
+ * against colour-vision deficiency on both grounds. Colour is spent on meaning
+ * — severity, entity type, source system — and never on chrome.
  *
- * Every token is defined for both themes here, and `tailwind.config.js` maps
- * the palette names the components already use onto these variables. That is
- * why `text-navy-800`, `bg-white` and `bg-teal-600` become theme-aware without
- * a single class being rewritten across the app.
- *
- * The greys are warm-neutral rather than blue-slate: on a screen an analyst
- * stares at for hours, a warm ground is easier to sit with, and it keeps the
- * cool semantic hues (info, teal) clearly separable from the chrome.
+ * `tailwind.config.js` maps the palette names the components already use
+ * (`navy`, `slate`, `teal`, `white`) onto these variables, which is why the
+ * whole app themes without those ~1,400 classes being rewritten.
  */
 
 :root,
@@ -23,144 +21,147 @@
   color-scheme: light;
 
   /* ── Ground and surfaces ─────────────────────────────────────────────── */
-  --ground: #f7f6f3; /* page canvas — warm paper */
-  --surface: #fffefc; /* cards, panels, menus */
-  --surface-raised: #ffffff; /* popovers, drawers over surface */
-  --surface-sunken: #f2f1ed; /* wells, table headers, inset areas */
-  --surface-inverse: #171614; /* solid ink blocks */
+  --ground: #f4f2ec;
+  --surface: #fcfbf7;
+  --surface-raised: #ffffff;
+  --surface-sunken: #eae7dc;
+  --surface-inverse: #151310;
 
-  /* ── Ink scale: 900 darkest → 50 faintest ───────────────────────────── */
-  --ink-950: #0b0a09;
-  --ink-900: #171614;
-  --ink-800: #2a2825;
-  --ink-700: #423f3a;
-  --ink-600: #5c584f;
-  --ink-500: #78736a;
-  --ink-400: #969087;
-  --ink-300: #b3ada3;
-  --ink-200: #d6d1c8;
-  --ink-100: #e8e4dc;
-  --ink-50: #f2f0ea;
+  /* ── Ink: 900 loudest → 50 faintest ─────────────────────────────────── */
+  --ink-950: #000000;
+  --ink-900: #151310;
+  --ink-800: #2e2a24;
+  --ink-700: #4c473e;
+  --ink-600: #6b6558;
+  --ink-500: #8b8577;
+  --ink-400: #a19a89;
+  --ink-300: #b7b09c;
+  --ink-200: #ddd8c9;
+  --ink-100: #e8e4d8;
+  --ink-50: #f0ede4;
 
-  /* ── Rules and edges ─────────────────────────────────────────────────── */
-  --line-strong: #d0cabf;
-  --line: #e2ddd3;
-  --line-soft: #ece8e0;
+  /* ── Rules ───────────────────────────────────────────────────────────── */
+  --line-strong: #cec7b4;
+  --line: #ddd8c9;
+  --line-soft: #e8e4d8;
 
-  /* ── Accent: reserved for interactive affordance only ────────────────── */
-  --accent: #0f6f68;
-  --accent-strong: #0b544f;
-  --accent-muted: #4c9a94;
-  --accent-surface: #e6f1ef;
-  --accent-line: #a9cec9;
+  /* ── Accent: the single interactive hue ──────────────────────────────── */
+  --accent: #2a78d6;
+  --accent-strong: #1e5da8;
+  --accent-muted: #6da7ec;
+  --accent-surface: rgba(42, 120, 214, 0.1);
+  --accent-line: rgba(42, 120, 214, 0.35);
   --accent-on: #ffffff;
 
-  /*
-   * Primary action. Under the thesis the strongest affordance is ink itself,
-   * not a hue — so a primary button is a solid block of ink on paper.
-   */
-  --action: #171614;
-  --action-hover: #2a2825;
-  --action-on: #fffefc;
+  /* The primary action follows the accent, as in the reference console. */
+  --action: #2a78d6;
+  --action-hover: #1e5da8;
+  --action-on: #ffffff;
 
-  /* ── Semantic data colours ───────────────────────────────────────────── */
-  --data-teal: #0d7a72;
-  --data-teal-soft: #dff0ee;
-  --data-violet: #6d43c8;
-  --data-violet-soft: #eae3fa;
-  --data-amber: #b4700a;
-  --data-amber-soft: #fbeed6;
-  --data-sky: #0369a1;
-  --data-sky-soft: #ddeefa;
-  --data-rose: #be123c;
-  --data-rose-soft: #fbe0e6;
-  --data-emerald: #047857;
-  --data-emerald-soft: #d9f0e6;
-  --data-neutral: #5c584f;
-  --data-neutral-soft: #eceae4;
+  /* ── Categorical series (s1–s5 in the reference) ─────────────────────── */
+  --data-sky: #2a78d6;
+  --data-sky-soft: rgba(42, 120, 214, 0.12);
+  --data-violet: #eb6834;
+  --data-violet-soft: rgba(235, 104, 52, 0.13);
+  --data-emerald: #1baf7a;
+  --data-emerald-soft: rgba(27, 175, 122, 0.13);
+  --data-teal: #1baf7a;
+  --data-teal-soft: rgba(27, 175, 122, 0.13);
+  --data-amber: #eda100;
+  --data-amber-soft: rgba(237, 161, 0, 0.14);
+  --data-rose: #e87ba4;
+  --data-rose-soft: rgba(232, 123, 164, 0.14);
+  --data-neutral: #8b8577;
+  --data-neutral-soft: rgba(139, 133, 119, 0.14);
 
-  /* ── Chart and graph chrome (read by JS for canvas/SVG) ──────────────── */
-  --viz-grid: #e2ddd3;
-  --viz-axis: #78736a;
-  --viz-label: #423f3a;
-  --viz-edge: #b3ada3;
+  /* ── Status roles ────────────────────────────────────────────────────── */
+  --good: #0ca30c;
+  --warning: #fab219;
+  --serious: #ec835a;
+  --critical: #d03b3b;
 
-  /* ── Elevation. Minimal by design: rules carry structure, not shadows. ─ */
-  --shadow-card: 0 1px 2px rgb(23 22 20 / 0.04);
-  --shadow-raised: 0 1px 2px rgb(23 22 20 / 0.05), 0 8px 24px -8px rgb(23 22 20 / 0.12);
-  --shadow-overlay: 0 24px 60px -12px rgb(23 22 20 / 0.24);
+  /* ── Chart and graph chrome (also read by JS) ────────────────────────── */
+  --viz-grid: #ddd8c9;
+  --viz-axis: #b7b09c;
+  --viz-label: #4c473e;
+  --viz-edge: #b7b09c;
 
-  --scrim: rgb(23 22 20 / 0.32);
-  --grain-opacity: 0.4;
+  --shadow-card: 0 1px 0 rgba(21, 19, 16, 0.04);
+  --shadow-raised: 0 1px 0 rgba(21, 19, 16, 0.05), 0 10px 28px -6px rgba(21, 19, 16, 0.14);
+  --shadow-overlay: 0 24px 60px -12px rgba(21, 19, 16, 0.28);
+  --shadow-glow: 0 1px 0 rgba(21, 19, 16, 0.05), 0 8px 22px -8px rgba(42, 120, 214, 0.3);
+
+  --scrim: rgba(21, 19, 16, 0.34);
+  --grain-opacity: 0.3;
 }
 
 [data-theme='dark'] {
   color-scheme: dark;
 
-  /*
-   * A warm charcoal rather than a blue-black. Pure black is avoided: it makes
-   * hairline rules disappear and raises halation on light text.
-   */
-  --ground: #100f0e;
-  --surface: #1a1917;
-  --surface-raised: #232120;
-  --surface-sunken: #151413;
-  --surface-inverse: #f2f0ea;
+  --ground: #0a0b0c;
+  --surface: #151615;
+  --surface-raised: #1e201f;
+  --surface-sunken: #101211;
+  --surface-inverse: #f2f0e9;
 
-  /* Ink inverts: 900 is now the *lightest* so `text-navy-900` stays "loudest". */
-  --ink-950: #fffefb;
-  --ink-900: #f4f2ed;
-  --ink-800: #e4e1da;
-  --ink-700: #cbc7bd;
-  --ink-600: #aaa59a;
-  --ink-500: #8e8880;
-  --ink-400: #746f68;
-  --ink-300: #5d5852;
-  --ink-200: #423f3a;
-  --ink-100: #302e2b;
-  --ink-50: #242220;
+  /* Ink inverts: 900 stays "loudest", which is now the lightest value. */
+  --ink-950: #ffffff;
+  --ink-900: #f2f0e9;
+  --ink-800: #d9d5c9;
+  --ink-700: #b8b4a6;
+  --ink-600: #999488;
+  --ink-500: #79766b;
+  --ink-400: #64615a;
+  --ink-300: #4d4a45;
+  --ink-200: #34362f;
+  --ink-100: #232522;
+  --ink-50: #1b1d1b;
 
-  --line-strong: #46433d;
-  --line: #302e2b;
-  --line-soft: #262421;
+  --line-strong: #34362f;
+  --line: #232522;
+  --line-soft: #1c1e1c;
 
-  --accent: #4fbdb2;
-  --accent-strong: #6fd3c8;
-  --accent-muted: #3f8f88;
-  --accent-surface: #17302e;
-  --accent-line: #2f5e59;
-  --accent-on: #0b1a19;
+  --accent: #4d9bf0;
+  --accent-strong: #7ab5f5;
+  --accent-muted: #2a78d6;
+  --accent-surface: rgba(77, 155, 240, 0.14);
+  --accent-line: rgba(77, 155, 240, 0.34);
+  --accent-on: #06121f;
 
-  /* Inverted: the strongest affordance is now paper on ink. */
-  --action: #f4f2ed;
-  --action-hover: #ffffff;
-  --action-on: #171614;
+  --action: #4d9bf0;
+  --action-hover: #7ab5f5;
+  --action-on: #06121f;
 
-  /* Data hues lifted and desaturated so they hold on a dark ground. */
-  --data-teal: #4fbdb2;
-  --data-teal-soft: #16302e;
-  --data-violet: #a78bfa;
-  --data-violet-soft: #241f38;
-  --data-amber: #e0a44a;
-  --data-amber-soft: #33270f;
-  --data-sky: #58b4e8;
-  --data-sky-soft: #13293a;
-  --data-rose: #f4718f;
-  --data-rose-soft: #37161f;
-  --data-emerald: #48c193;
-  --data-emerald-soft: #122e23;
-  --data-neutral: #aaa59a;
-  --data-neutral-soft: #262421;
+  --data-sky: #3987e5;
+  --data-sky-soft: rgba(57, 135, 229, 0.16);
+  --data-violet: #d95926;
+  --data-violet-soft: rgba(217, 89, 38, 0.16);
+  --data-emerald: #199e70;
+  --data-emerald-soft: rgba(25, 158, 112, 0.16);
+  --data-teal: #199e70;
+  --data-teal-soft: rgba(25, 158, 112, 0.16);
+  --data-amber: #c98500;
+  --data-amber-soft: rgba(201, 133, 0, 0.18);
+  --data-rose: #d55181;
+  --data-rose-soft: rgba(213, 81, 129, 0.18);
+  --data-neutral: #79766b;
+  --data-neutral-soft: rgba(121, 118, 107, 0.18);
 
-  --viz-grid: #302e2b;
-  --viz-axis: #8e8880;
-  --viz-label: #cbc7bd;
-  --viz-edge: #5d5852;
+  --good: #2fb62f;
+  --warning: #fab219;
+  --serious: #ec835a;
+  --critical: #e05252;
 
-  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
-  --shadow-raised: 0 1px 2px rgb(0 0 0 / 0.5), 0 8px 24px -8px rgb(0 0 0 / 0.6);
-  --shadow-overlay: 0 24px 60px -12px rgb(0 0 0 / 0.7);
+  --viz-grid: #232522;
+  --viz-axis: #4d4a45;
+  --viz-label: #b8b4a6;
+  --viz-edge: #4d4a45;
 
-  --scrim: rgb(5 5 4 / 0.66);
-  --grain-opacity: 0.55;
+  --shadow-card: 0 1px 0 rgba(0, 0, 0, 0.5);
+  --shadow-raised: 0 1px 0 rgba(0, 0, 0, 0.5), 0 10px 28px -6px rgba(0, 0, 0, 0.55);
+  --shadow-overlay: 0 24px 60px -12px rgba(0, 0, 0, 0.72);
+  --shadow-glow: 0 1px 0 rgba(0, 0, 0, 0.5), 0 8px 22px -8px rgba(77, 155, 240, 0.4);
+
+  --scrim: rgba(0, 0, 0, 0.68);
+  --grain-opacity: 0.45;
 }

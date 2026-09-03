@@ -21,7 +21,7 @@ export function InvestigationCard({ investigation, onClick, className }) {
   return (
     <Card
       onClick={() => onClick?.(investigation)}
-      className={`flex h-full cursor-pointer flex-col p-4 transition-shadow hover:shadow-md ${className || ''}`}
+      className={`hover-lift flex h-full cursor-pointer flex-col p-4 ${className || ''}`}
     >
       <div className="flex flex-wrap items-center gap-2">
         <span className="rounded bg-navy-50 px-1.5 py-0.5 font-mono text-[11px] font-medium text-navy-500">

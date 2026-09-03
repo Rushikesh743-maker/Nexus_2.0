@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Users,
   Network,
@@ -28,6 +28,7 @@ import { Button } from '@/components/ui/Button';
 import { Table, TBody, Td, Th, THead, Tr } from '@/components/ui/Table';
 import { StatCard } from '@/components/cards/StatCard';
 import { AnalysisDisclosure, AnalysisError, AnalysisSkeleton, SyntheticNotice } from '@/components/analysis/AnalysisState';
+import { BarRowsPanel } from '@/components/analysis/BarRows';
 import { CapabilityStrip } from '@/components/analysis/CapabilityStrip';
 import { MarkdownReport } from '@/components/analysis/MarkdownReport';
 import { useCnaResource } from '@/hooks/useCnaResource';
@@ -37,13 +38,22 @@ import { cnaFindingType, cnaSeverity, cnaSourceType, formatScore } from '@/lib/c
 import { formatDateTime } from '@/lib/utils';
 import { useAnalysisCase } from './AnalysisLayout';
 
-const TILE_ICONS = { subjects: Users, links: Network, flags: ShieldAlert, groups: Layers };
-const TILE_TONES = { subjects: 'teal', links: 'sky', flags: 'rose', groups: 'violet' };
+/* Only a status role earns colour on a tile; the rest stay in the accent. */
+const TILE_TONES = { subjects: 'accent', links: 'accent', flags: 'critical', groups: 'accent' };
 
-const SOURCE_COLORS = ['var(--data-teal)', 'var(--data-violet)', 'var(--data-amber)', 'var(--data-sky)', 'var(--data-rose)', 'var(--ink-600)', 'var(--data-emerald)'];
+/* The reference console's categorical series, in order. */
+const SERIES = [
+  'var(--data-sky)',
+  'var(--data-violet)',
+  'var(--data-emerald)',
+  'var(--data-amber)',
+  'var(--data-rose)',
+  'var(--data-neutral)',
+];
 
 export function AnalysisOverviewPage() {
   const { basePath } = useAnalysisCase();
+  const navigate = useNavigate();
   const toast = useToast();
   const [exporting, setExporting] = useState(false);
 
@@ -110,8 +120,7 @@ export function AnalysisOverviewPage() {
           {tiles.map((t) => (
             <StatCard
               key={t.key}
-              icon={TILE_ICONS[t.key] || Network}
-              tone={TILE_TONES[t.key] || 'teal'}
+              tone={TILE_TONES[t.key] || 'accent'}
               label={t.label}
               value={t.value}
               sub={t.hint}
@@ -167,8 +176,8 @@ export function AnalysisOverviewPage() {
 
                 {/* Every chart has a table behind it — no value is hover-only. */}
                 <details className="mt-3">
-                  <summary className="cursor-pointer text-[12px] font-medium text-navy-500 hover:text-teal-700">
-                    View as table
+                  <summary className="cursor-pointer font-mono text-[10px] uppercase tracking-[0.1em] text-navy-400 transition-colors hover:text-navy-800">
+                    Table
                   </summary>
                   <Table className="mt-2 min-w-0">
                     <THead>
@@ -262,118 +271,39 @@ export function AnalysisOverviewPage() {
       </div>
 
       <div className="grid gap-5 lg:grid-cols-2">
-        {/* What fired */}
-        <Card>
-          <CardHeader
-            title="What fired"
-            subtitle="Findings by detector. Each detector answers one stated question."
-            actions={
-              <Link to={`${basePath}/patterns`} className="text-[12px] font-medium text-teal-700 hover:text-teal-800">
-                All findings →
-              </Link>
-            }
-          />
-          <CardBody>
-            {dash.loading && !dash.data ? (
-              <AnalysisSkeleton rows={5} />
-            ) : (
-              <Table className="min-w-0">
-                <THead>
-                  <Tr>
-                    <Th>Detector</Th>
-                    <Th className="w-20 text-right">Findings</Th>
-                    <Th className="w-16 text-right">High</Th>
-                  </Tr>
-                </THead>
-                <TBody>
-                  {byType.map((t) => {
-                    const meta = cnaFindingType(t.key);
-                    return (
-                      <Tr key={t.key}>
-                        <Td>
-                          <span className="flex items-center gap-2">
-                            <meta.icon className="h-3.5 w-3.5 shrink-0 text-navy-300" aria-hidden />
-                            <span className="font-medium text-navy-800">{t.label}</span>
-                          </span>
-                        </Td>
-                        <Td className="text-right font-semibold">{t.value}</Td>
-                        <Td className="text-right">
-                          {t.high > 0 ? <Badge variant="danger">{t.high}</Badge> : <span className="text-navy-300">—</span>}
-                        </Td>
-                      </Tr>
-                    );
-                  })}
-                </TBody>
-              </Table>
-            )}
-          </CardBody>
-        </Card>
+        {/* What fired — bar rows with a table behind them, as in the console. */}
+        <BarRowsPanel
+          title="Findings by type"
+          caption={`${byType.length} detector${byType.length === 1 ? '' : 's'} fired`}
+          valueLabel="Findings"
+          rows={byType.map((t) => ({
+            key: t.key,
+            label: t.label,
+            value: t.value,
+            /*
+             * Uniform accent, as in the reference console. Colouring each bar by
+             * whether the detector produced a high-severity finding turned most
+             * of the panel red and drowned out the severity split, which has its
+             * own panel and is the place that question is actually answered.
+             */
+            color: 'var(--accent)',
+            high: t.high,
+          }))}
+          onRowClick={(r) => navigate(`${basePath}/patterns?type=${r.key}`)}
+        />
 
-        {/* Where evidence came from */}
-        <Card>
-          <CardHeader
-            title="Where the evidence came from"
-            subtitle="Relationships contributed by each source system, and the raw observations behind them."
-          />
-          <CardBody>
-            {dash.loading && !dash.data ? (
-              <AnalysisSkeleton rows={5} />
-            ) : (
-              <>
-                <div className="h-[200px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={bySource} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="var(--viz-grid)" vertical={false} />
-                      <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'var(--data-neutral)' }} tickLine={false} axisLine={false} />
-                      <YAxis tick={{ fontSize: 11, fill: 'var(--data-neutral)' }} tickLine={false} axisLine={false} />
-                      <RTooltip
-                        contentStyle={{
-                          borderRadius: 6,
-                          border: '1px solid var(--line)',
-                          background: 'var(--surface-raised)',
-                          color: 'var(--ink-800)',
-                          fontSize: 12,
-                        }}
-                        formatter={(v) => [v, 'Relationships']}
-                      />
-                      <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                        {bySource.map((_, i) => (
-                          <Cell key={i} fill={SOURCE_COLORS[i % SOURCE_COLORS.length]} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-                <Table className="mt-3 min-w-0">
-                  <THead>
-                    <Tr>
-                      <Th>Source</Th>
-                      <Th className="w-28 text-right">Relationships</Th>
-                      <Th className="w-28 text-right">Observations</Th>
-                    </Tr>
-                  </THead>
-                  <TBody>
-                    {bySource.map((s) => {
-                      const meta = cnaSourceType(s.key);
-                      return (
-                        <Tr key={s.key}>
-                          <Td>
-                            <span className="flex items-center gap-2">
-                              <meta.icon className="h-3.5 w-3.5 shrink-0 text-navy-300" aria-hidden />
-                              {s.label}
-                            </span>
-                          </Td>
-                          <Td className="text-right font-semibold">{s.value}</Td>
-                          <Td className="text-right text-navy-500">{s.observations}</Td>
-                        </Tr>
-                      );
-                    })}
-                  </TBody>
-                </Table>
-              </>
-            )}
-          </CardBody>
-        </Card>
+        {/* Where the evidence came from */}
+        <BarRowsPanel
+          title="Where the evidence comes from"
+          caption="links attested per source system"
+          valueLabel="Relationships"
+          rows={bySource.map((sItem, i) => ({
+            key: sItem.key,
+            label: sItem.label,
+            value: sItem.value,
+            color: SERIES[i % SERIES.length],
+          }))}
+        />
       </div>
 
       {/* Top subjects */}

@@ -140,18 +140,23 @@ export default {
       },
 
       fontFamily: {
-        /* Instrument Sans: geometric, characterful, and legible at 11–13px. */
+        /* Plus Jakarta Sans: rounded terminals, friendly but professional, legible at 11–13px. */
         sans: [
-          '"Instrument Sans Variable"',
-          '"Instrument Sans"',
+          '"IBM Plex Sans Variable"',
+          '"IBM Plex Sans"',
           '"Noto Sans Devanagari Variable"',
           'system-ui',
           'sans-serif',
         ],
-        /* Instrument Serif: editorial display, used only for page titles. */
-        display: ['"Instrument Serif"', 'Georgia', 'serif'],
+        /* Fraunces: soft-serif display, used only for page titles and the wordmark. */
+        /*
+         * Headings are set in the mono, matching the reference console. In an
+         * instrument, a monospaced heading reads as a system label rather than
+         * as editorial voice — which is the correct register here.
+         */
+        display: ['"IBM Plex Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
         /* Every figure in this product is evidence — figures get their own face. */
-        mono: ['"JetBrains Mono Variable"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+        mono: ['"IBM Plex Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
       },
 
       fontSize: {
@@ -160,12 +165,14 @@ export default {
       },
 
       borderRadius: {
-        /* Tightened throughout: an instrument, not a toy. */
-        DEFAULT: '4px',
-        md: '5px',
-        lg: '6px',
-        xl: '8px',
-        '2xl': '10px',
+        /* Moderate rounding — soft and current without losing precision. */
+        DEFAULT: '8px',
+        sm: '6px',
+        md: '9px',
+        lg: '12px',
+        xl: '14px',
+        '2xl': '16px',
+        '3xl': '20px',
       },
 
       boxShadow: {
@@ -173,6 +180,9 @@ export default {
         dropdown: 'var(--shadow-raised)',
         raised: 'var(--shadow-raised)',
         overlay: 'var(--shadow-overlay)',
+        /* Focus/hover affordance on interactive surfaces — a bright accent
+           ring in dark mode, a near-invisible lift in light mode. */
+        glow: 'var(--shadow-glow)',
       },
 
       ringOffsetColor: {
@@ -182,6 +192,8 @@ export default {
 
       transitionTimingFunction: {
         instrument: 'cubic-bezier(0.2, 0.6, 0.2, 1)',
+        /* A slight overshoot for things that should feel pressed/released. */
+        spring: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
       },
 
       keyframes: {
@@ -189,9 +201,20 @@ export default {
           from: { opacity: '0', transform: 'translateY(4px)' },
           to: { opacity: '1', transform: 'none' },
         },
+        'nexus-pulse-ring': {
+          '0%': { boxShadow: '0 0 0 0 var(--accent-line)' },
+          '70%': { boxShadow: '0 0 0 6px transparent' },
+          '100%': { boxShadow: '0 0 0 0 transparent' },
+        },
+        'nexus-breathe': {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.55' },
+        },
       },
       animation: {
         rise: 'nexus-rise 0.24s cubic-bezier(0.2, 0.6, 0.2, 1) both',
+        'pulse-ring': 'nexus-pulse-ring 1.8s cubic-bezier(0.2, 0.6, 0.2, 1) infinite',
+        breathe: 'nexus-breathe 2.2s ease-in-out infinite',
       },
     },
   },

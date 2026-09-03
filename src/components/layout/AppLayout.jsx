@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 import { CommandPalette } from './CommandPalette';
+import { SyntheticBanner } from './SyntheticBanner';
 import { DemoModeTour } from '@/components/demo/DemoModeTour';
 import { APP_VERSION } from '@/lib/constants';
 import { storage } from '@/lib/storage';
@@ -29,6 +30,8 @@ export function AppLayout() {
 
   return (
     <div className="nexus-grain min-h-screen bg-ground">
+      <SyntheticBanner />
+
       <Sidebar
         collapsed={collapsed}
         onToggleCollapse={toggleCollapsed}

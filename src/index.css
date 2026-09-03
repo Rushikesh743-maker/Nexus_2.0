@@ -84,6 +84,30 @@
   .hairline {
     border-color: var(--line);
   }
+
+  /* Subtle lift for interactive cards/tiles — a hint of motion, not a bounce. */
+  .hover-lift {
+    transition: transform 0.18s cubic-bezier(0.2, 0.6, 0.2, 1),
+      box-shadow 0.18s cubic-bezier(0.2, 0.6, 0.2, 1), border-color 0.15s ease;
+  }
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-glow);
+    border-color: var(--line-strong);
+  }
+
+  /* A small live dot for "this is streaming/updating right now" moments. */
+  .live-dot {
+    position: relative;
+  }
+  .live-dot::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 9999px;
+    background: currentColor;
+    animation: nexus-pulse-ring 1.8s cubic-bezier(0.2, 0.6, 0.2, 1) infinite;
+  }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -111,6 +135,18 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+@keyframes nexus-pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 var(--accent-line);
+  }
+  70% {
+    box-shadow: 0 0 0 6px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
   }
 }
 

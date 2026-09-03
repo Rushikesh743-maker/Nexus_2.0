@@ -24,8 +24,17 @@ export function CardHeader({ title, subtitle, actions, className, children }) {
       )}
     >
       <div className="min-w-0">
-        {title && <h2 className="text-[13.5px] font-semibold tracking-tight text-navy-900">{title}</h2>}
-        {subtitle && <p className="mt-1 max-w-2xl text-[12px] leading-relaxed text-navy-400">{subtitle}</p>}
+        {/*
+          Panel titles are uppercase mono, as in the reference console. In an
+          instrument this register reads as a system label rather than as prose,
+          which is what separates a panel heading from the content inside it.
+        */}
+        {title && (
+          <h2 className="font-mono text-[11.5px] font-semibold uppercase tracking-[0.09em] text-navy-900">
+            {title}
+          </h2>
+        )}
+        {subtitle && <p className="mt-1.5 max-w-2xl text-[11.5px] leading-relaxed text-navy-400">{subtitle}</p>}
         {children}
       </div>
       {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}

@@ -18,8 +18,8 @@ export function EntityCard({ entity, onClick, selected = false, className }) {
     <Card
       onClick={() => onClick?.(entity)}
       className={cn(
-        'flex h-full cursor-pointer flex-col p-3.5 transition-shadow',
-        selected ? 'ring-2 ring-teal-500' : 'hover:shadow-md',
+        'flex h-full cursor-pointer flex-col p-3.5',
+        selected ? 'ring-2 ring-teal-500' : 'hover-lift',
         className
       )}
     >

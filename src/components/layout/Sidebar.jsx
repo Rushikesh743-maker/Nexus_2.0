@@ -26,9 +26,10 @@ function NavItem({ to, label, icon: Icon, end, collapsed, onClick }) {
       onClick={onClick}
       className={({ isActive }) =>
         cn(
-          'group relative flex w-full items-center gap-3 rounded-md px-3 py-2 text-[13px] font-medium transition-colors duration-150',
+          'group relative flex w-full items-center gap-3 rounded-md px-3 py-2 text-[13px] font-medium',
+          'transition-[background-color,color,transform] duration-150 ease-instrument active:scale-[0.98]',
           isActive
-            ? 'bg-surface-inverse text-action-on'
+            ? 'bg-surface-inverse text-action-on shadow-glow'
             : 'text-navy-500 hover:bg-slate-50 hover:text-navy-900',
           collapsed && 'lg:justify-center lg:px-0'
         )
@@ -38,11 +39,11 @@ function NavItem({ to, label, icon: Icon, end, collapsed, onClick }) {
         <>
           {isActive && (
             <span
-              className="absolute left-0 top-1/2 h-4 w-[2px] -translate-y-1/2 rounded-full bg-accent"
+              className="absolute left-0 top-1/2 h-4 w-[2px] -translate-y-1/2 rounded-full bg-accent transition-all duration-200"
               aria-hidden
             />
           )}
-          <Icon className="h-4 w-4 shrink-0" aria-hidden />
+          <Icon className="h-4 w-4 shrink-0 transition-transform duration-150 group-hover:scale-110" aria-hidden />
           <span className={cn('truncate', collapsed && 'lg:hidden')}>{label}</span>
         </>
       )}
@@ -213,7 +214,7 @@ export function Sidebar({ collapsed, onToggleCollapse, mobileOpen, onCloseMobile
       {/* Desktop rail */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-40 hidden flex-col border-r border-line bg-surface transition-[width] duration-200 ease-instrument lg:flex',
+          'fixed bottom-0 left-0 top-[27px] z-40 hidden flex-col border-r border-line bg-surface transition-[width] duration-200 ease-instrument lg:flex',
           collapsed ? 'w-[68px]' : 'w-[232px]'
         )}
       >
