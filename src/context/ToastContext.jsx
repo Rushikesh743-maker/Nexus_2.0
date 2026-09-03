@@ -42,8 +42,13 @@ export function ToastProvider({ children }) {
   );
 }
 
+/**
+ * Returns the toast API itself (`success` / `error` / `info` / `warning`), so
+ * call sites read `toast.success(...)`. The viewport is rendered by the
+ * provider, so no consumer needs the queue or the dismiss handler.
+ */
 export function useToast() {
   const ctx = useContext(ToastContext);
   if (!ctx) throw new Error('useToast must be used within a ToastProvider');
-  return ctx;
+  return ctx.toast;
 }

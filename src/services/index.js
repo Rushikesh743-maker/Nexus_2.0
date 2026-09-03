@@ -8,3 +8,4 @@ export * as investigationService from './investigationService';
 export * as evidenceService from './evidenceService';
 export * as intelligenceService from './intelligenceService';
 export * as analysisService from './analysisService';
+export * as cnaService from './cnaService';

@@ -10,3 +10,14 @@ npm-debug.log*
 logs
 *.log
 .vite
+
+# Python backend
+venv/
+__pycache__/
+*.pyc
+data/raw/
+data/scans/
+exports/
+# Runtime audit log written by backend/app/auth.py
+audit_log.jsonl
+backend/audit_log.jsonl

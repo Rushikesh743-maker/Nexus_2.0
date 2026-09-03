@@ -14,6 +14,16 @@ export default defineConfig({
     host: true,
     port: 5173,
     allowedHosts: true,
+    proxy: {
+      // Criminal-network-analysis backend (FastAPI, see backend/).
+      // Namespaced away from `/api` so it can never collide with the future
+      // NEXUS REST backend that the mock switch targets.
+      '/cna-api': {
+        target: process.env.VITE_CNA_TARGET || 'http://127.0.0.1:8000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/cna-api/, '/api'),
+      },
+    },
   },
   build: {
     rollupOptions: {

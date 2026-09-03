@@ -55,6 +55,7 @@ export const CASE_TYPES = {
   counterfeiting: { label: 'Counterfeiting' },
   smuggling: { label: 'Smuggling' },
   extortion: { label: 'Extortion' },
+  organised_network: { label: 'Organised Network' },
 };
 
 /** Ordered options for the create-investigation form. */

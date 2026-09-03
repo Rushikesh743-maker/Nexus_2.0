@@ -30,6 +30,15 @@ import { MapPage } from '@/pages/investigations/MapPage';
 import { TimelinePage } from '@/pages/investigations/TimelinePage';
 import { IntelligencePage } from '@/pages/investigations/IntelligencePage';
 import { ReportsPage } from '@/pages/investigations/ReportsPage';
+import { AnalysisLayout } from '@/pages/analysis/AnalysisLayout';
+import { AnalysisOverviewPage } from '@/pages/analysis/AnalysisOverviewPage';
+import { AnalysisGraphPage } from '@/pages/analysis/AnalysisGraphPage';
+import { KeyPeoplePage } from '@/pages/analysis/KeyPeoplePage';
+import { PatternsPage } from '@/pages/analysis/PatternsPage';
+import { LinkAnalysisPage } from '@/pages/analysis/LinkAnalysisPage';
+import { PipelinePage } from '@/pages/analysis/PipelinePage';
+import { AskPage } from '@/pages/analysis/AskPage';
+import { SystemPage } from '@/pages/analysis/SystemPage';
 import { SettingsPage } from '@/pages/settings/SettingsPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { Navigate, Route, Routes } from 'react-router-dom';
@@ -74,6 +83,18 @@ export default function App() {
                 <Route path="timeline" element={<TimelinePage />} />
                 <Route path="intelligence" element={<IntelligencePage />} />
                 <Route path="reports" element={<ReportsPage />} />
+
+                {/* Criminal-network-analysis surfaces, served by backend/. */}
+                <Route path="analysis" element={<AnalysisLayout />}>
+                  <Route index element={<AnalysisOverviewPage />} />
+                  <Route path="graph" element={<AnalysisGraphPage />} />
+                  <Route path="people" element={<KeyPeoplePage />} />
+                  <Route path="patterns" element={<PatternsPage />} />
+                  <Route path="links" element={<LinkAnalysisPage />} />
+                  <Route path="pipeline" element={<PipelinePage />} />
+                  <Route path="ask" element={<AskPage />} />
+                  <Route path="system" element={<SystemPage />} />
+                </Route>
               </Route>
               <Route path="/settings" element={<SettingsPage />} />
             </Route>
