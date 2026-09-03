@@ -32,6 +32,19 @@
     outline-offset: 2px;
   }
 
+  /*
+   * SVG marks draw their own selected state. A rectangular outline around a
+   * circular point reads as a bug, so keyboard focus is shown by the ring the
+   * mark already renders rather than by the box.
+   */
+  svg [role='button']:focus {
+    outline: none;
+  }
+  svg [role='button']:focus-visible circle:first-of-type {
+    stroke: var(--accent);
+    stroke-width: 2;
+  }
+
   ::selection {
     background: var(--accent-surface);
     color: var(--ink-900);

@@ -25,6 +25,7 @@ export function useAnalysisCase() {
 const VIEWS = [
   { to: '', end: true, label: 'Overview' },
   { to: 'graph', label: 'Network' },
+  { to: 'map', label: 'Map' },
   { to: 'people', label: 'Key People' },
   { to: 'patterns', label: 'Patterns' },
   { to: 'links', label: 'Links' },

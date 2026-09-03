@@ -34,6 +34,7 @@ import { ReportsPage } from '@/pages/investigations/ReportsPage';
 import { AnalysisLayout } from '@/pages/analysis/AnalysisLayout';
 import { AnalysisOverviewPage } from '@/pages/analysis/AnalysisOverviewPage';
 import { AnalysisGraphPage } from '@/pages/analysis/AnalysisGraphPage';
+import { AnalysisMapPage } from '@/pages/analysis/AnalysisMapPage';
 import { KeyPeoplePage } from '@/pages/analysis/KeyPeoplePage';
 import { PatternsPage } from '@/pages/analysis/PatternsPage';
 import { LinkAnalysisPage } from '@/pages/analysis/LinkAnalysisPage';
@@ -90,6 +91,7 @@ export default function App() {
                   <Route path="analysis" element={<AnalysisLayout />}>
                     <Route index element={<AnalysisOverviewPage />} />
                     <Route path="graph" element={<AnalysisGraphPage />} />
+                  <Route path="map" element={<AnalysisMapPage />} />
                     <Route path="people" element={<KeyPeoplePage />} />
                     <Route path="patterns" element={<PatternsPage />} />
                     <Route path="links" element={<LinkAnalysisPage />} />

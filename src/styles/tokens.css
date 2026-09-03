@@ -6,7 +6,7 @@
  * /legacy), so the React app and the no-build console read as one product
  * rather than two skins of it.
  *
- * Character: a dark-first analytical instrument. Near-black ground, a single
+ * Character: a dark-first analytical instrument. A true-black ground, a single
  * blue accent for interaction, and a categorical series that was validated
  * against colour-vision deficiency on both grounds. Colour is spent on meaning
  * — severity, entity type, source system — and never on chrome.
@@ -21,10 +21,10 @@
   color-scheme: light;
 
   /* ── Ground and surfaces ─────────────────────────────────────────────── */
-  --ground: #f4f2ec;
-  --surface: #fcfbf7;
+  --ground: #f7f6f3;
+  --surface: #fffefc;
   --surface-raised: #ffffff;
-  --surface-sunken: #eae7dc;
+  --surface-sunken: #f2f1ed;
   --surface-inverse: #151310;
 
   /* ── Ink: 900 loudest → 50 faintest ─────────────────────────────────── */
@@ -98,10 +98,15 @@
 [data-theme='dark'] {
   color-scheme: dark;
 
-  --ground: #0a0b0c;
-  --surface: #151615;
-  --surface-raised: #1e201f;
-  --surface-sunken: #101211;
+  /*
+   * The ground stays true black; panels sit on a dark grey above it. The gap
+   * between the two is what separates a panel from the page without needing a
+   * heavy border, and it keeps a wall of cards from reading as one dark mass.
+   */
+  --ground: #000000;
+  --surface: #141416;
+  --surface-raised: #1c1c1f;
+  --surface-sunken: #0c0c0e;
   --surface-inverse: #f2f0e9;
 
   /* Ink inverts: 900 stays "loudest", which is now the lightest value. */
@@ -117,9 +122,9 @@
   --ink-100: #232522;
   --ink-50: #1b1d1b;
 
-  --line-strong: #34362f;
-  --line: #232522;
-  --line-soft: #1c1e1c;
+  --line-strong: #3a3a3e;
+  --line: #282829;
+  --line-soft: #1f1f21;
 
   --accent: #4d9bf0;
   --accent-strong: #7ab5f5;
