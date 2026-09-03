@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
 import { PageLoader } from '@/components/ui/LoadingState';
 import { ErrorState } from '@/components/ui/ErrorState';
-import { analysisService, evidenceService } from '@/services';
+import { analysisService, evidenceService, intelligenceService } from '@/services';
 import { useToast } from '@/context/ToastContext';
 import { cn } from '@/lib/utils';
 
@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 export function ImpactSimulator({ investigationId }) {
   const toast = useToast();
   const [evidence, setEvidence] = useState(null);
+  const [network, setNetwork] = useState(null);
   const [error, setError] = useState(null);
   const [selected, setSelected] = useState('');
   const [running, setRunning] = useState(false);
@@ -26,9 +27,15 @@ export function ImpactSimulator({ investigationId }) {
   useEffect(() => {
     let active = true;
     setError(null);
-    evidenceService
-      .list(investigationId)
-      .then((r) => active && setEvidence(r.items))
+    Promise.all([
+      evidenceService.list(investigationId),
+      intelligenceService.getNetwork(investigationId),
+    ])
+      .then(([ev, net]) => {
+        if (!active) return;
+        setEvidence(ev.items);
+        setNetwork(net);
+      })
       .catch((e) => active && setError(e));
     return () => {
       active = false;
@@ -36,10 +43,27 @@ export function ImpactSimulator({ investigationId }) {
   }, [investigationId]);
 
   const previewGraph = useMemo(() => {
-    // Simple visual: the strongest relationship chain A — B — C by name.
-    if (!evidence || !evidence.length) return null;
-    return { a: 'Entity A', b: 'Entity B', c: 'Entity C' };
-  }, [evidence]);
+    // The strongest relationship chain A — B — C, by entity name. The hinge is
+    // whichever end of the strongest link carries the next-strongest link on to
+    // a third entity, so the chain is three distinct subjects or nothing.
+    const rels = network?.relationships;
+    if (!rels?.length) return null;
+    const nameById = Object.fromEntries((network.entities || []).map((e) => [e.id, e.name]));
+    const sorted = [...rels].sort((x, y) => y.strength - x.strength);
+    const first = sorted[0];
+    const next = sorted
+      .slice(1)
+      .find(
+        (r) =>
+          [r.sourceId, r.targetId].some((id) => id === first.sourceId || id === first.targetId) &&
+          [r.sourceId, r.targetId].some((id) => id !== first.sourceId && id !== first.targetId)
+      );
+    if (!next) return null;
+    const hinge = [next.sourceId, next.targetId].find((id) => id === first.sourceId || id === first.targetId);
+    const tail = [next.sourceId, next.targetId].find((id) => id !== hinge);
+    const head = [first.sourceId, first.targetId].find((id) => id !== hinge);
+    return { a: nameById[head], b: nameById[hinge], c: nameById[tail] };
+  }, [network]);
 
   const run = async () => {
     if (!selected) return;
@@ -55,7 +79,7 @@ export function ImpactSimulator({ investigationId }) {
   };
 
   if (error) return <ErrorState title="Could not load the simulator" description={error.message} onRetry={() => setError(null)} />;
-  if (!evidence) return <PageLoader label="Preparing simulator…" />;
+  if (!evidence || !network) return <PageLoader label="Preparing simulator…" />;
 
   return (
     <Card>
@@ -82,16 +106,18 @@ export function ImpactSimulator({ investigationId }) {
         </div>
 
         {/* Current picture (schematic) */}
+        {previewGraph && (
         <div className="rounded-xl border border-slate-200 p-4">
           <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-navy-300">Current investigation</p>
           <div className="mt-3 flex items-center gap-3 font-mono text-[13px] font-semibold text-navy-700">
-            <span className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5">{previewGraph?.a}</span>
+            <span className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5">{previewGraph.a}</span>
             <span className="text-navy-300">───</span>
-            <span className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5">{previewGraph?.b}</span>
+            <span className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5">{previewGraph.b}</span>
             <span className="text-navy-300">───</span>
-            <span className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5">{previewGraph?.c}</span>
+            <span className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5">{previewGraph.c}</span>
           </div>
         </div>
+        )}
 
         {!result && (
           <Button icon={FlaskConical} onClick={run} disabled={!selected || running} loading={running}>

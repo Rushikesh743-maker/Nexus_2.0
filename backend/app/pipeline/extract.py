@@ -106,7 +106,9 @@ PATTERNS = {
     "PHONE":   re.compile(r"\b([6-9]\d{9})\b"),
     "VEHICLE": re.compile(r"\b(MH\s?\d{2}\s?[A-Z]{1,2}\s?\d{3,4})\b"),
     "ACCOUNT": re.compile(r"\b(AC[A-Z]{3}\d{4})\b"),
-    "MONEY":   re.compile(r"(?:Rs\.?|INR|₹)\s?([\d,]+(?:\.\d+)?)\s*(crore|lakh|cr|l)?", re.I),
+    # \b before the Latin prefixes, or "hrs," matches the "rs" in it; and the
+    # amount must start with a digit, or "[\d,]+" happily captures a lone comma.
+    "MONEY":   re.compile(r"(?:\bRs\.?|\bINR\b|₹)\s?(\d[\d,]*(?:\.\d+)?)\s*(crore|lakh|cr|l)?", re.I),
     "DATE":    re.compile(r"\b(\d{2}/\d{2}/\d{4})\b"),
     "IMEI":    re.compile(r"\b(\d{15})\b"),
 }

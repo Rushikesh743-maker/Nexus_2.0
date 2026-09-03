@@ -17,10 +17,13 @@ import { hashString } from '@/lib/utils';
  */
 
 async function caseDataset(investigationId) {
-  const [network, evidence] = await Promise.all([
+  const [network, evidenceList] = await Promise.all([
     intelligenceService.getNetwork(investigationId),
     evidenceService.list(investigationId),
   ]);
+  // `evidenceService.list` answers with { items, total }; every consumer below
+  // treats `evidence` as a plain array.
+  const evidence = evidenceList?.items ?? [];
   const byId = Object.fromEntries(network.entities.map((e) => [e.id, e]));
   const rels = [...network.relationships].sort((a, b) => b.strength - a.strength);
   const named = (r) => {

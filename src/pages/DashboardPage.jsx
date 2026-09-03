@@ -210,7 +210,7 @@ export function DashboardPage() {
                     }
                   />
                 ) : (
-                  <Table className="min-w-[720px]">
+                  <Table className="min-w-[560px] [&_th]:px-3 [&_td]:px-3">
                     <THead>
                       <tr>
                         <Th>Investigation</Th>
@@ -226,7 +226,7 @@ export function DashboardPage() {
                         const status = INVESTIGATION_STATUS[inv.status] || INVESTIGATION_STATUS.closed;
                         return (
                           <Tr key={inv.id} onClick={() => navigate(`/investigations/${inv.id}`)}>
-                            <td className="max-w-[300px] px-4 py-2.5">
+                            <td className="max-w-[220px] px-4 py-2.5">
                               <span className="figure block text-[10.5px] leading-none text-navy-400">{inv.code}</span>
                               <Link
                                 to={`/investigations/${inv.id}`}
