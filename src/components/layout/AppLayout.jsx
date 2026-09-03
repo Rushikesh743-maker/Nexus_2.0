@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
+import { CommandPalette } from './CommandPalette';
 import { DemoModeTour } from '@/components/demo/DemoModeTour';
 import { APP_VERSION } from '@/lib/constants';
 import { storage } from '@/lib/storage';
@@ -27,7 +28,7 @@ export function AppLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="nexus-grain min-h-screen bg-ground">
       <Sidebar
         collapsed={collapsed}
         onToggleCollapse={toggleCollapsed}
@@ -35,21 +36,32 @@ export function AppLayout() {
         onCloseMobile={() => setMobileOpen(false)}
       />
 
-      <div className={cn('flex min-h-screen flex-col transition-[padding] duration-200', collapsed ? 'lg:pl-[76px]' : 'lg:pl-64')}>
+      <div
+        className={cn(
+          'relative z-[1] flex min-h-screen flex-col transition-[padding] duration-200 ease-instrument',
+          collapsed ? 'lg:pl-[68px]' : 'lg:pl-[232px]'
+        )}
+      >
         <Topbar onMenu={() => setMobileOpen(true)} />
-        <main className="mx-auto w-full max-w-[1440px] flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+
+        <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
           <Outlet />
         </main>
-        <footer className="border-t border-slate-200 px-4 py-3 sm:px-6 lg:px-8">
-          <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-2 text-[11px] text-navy-300">
-            <span>
-              NEXUS {APP_VERSION} — frontend preview · fictional demo data only
+
+        <footer className="border-t border-line-soft px-4 py-4 sm:px-6 lg:px-8">
+          <div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-between gap-x-6 gap-y-2">
+            <span className="text-[11px] text-navy-300">
+              NEXUS <span className="figure">{APP_VERSION}</span> · fictional demo data only
             </span>
-            <span>NEXUS provides analytical assistance and investigation leads. It does not determine guilt or replace investigator judgment.</span>
+            <span className="max-w-xl text-[11px] leading-relaxed text-navy-300">
+              NEXUS provides analytical assistance and investigation leads. It does not determine guilt or replace
+              investigator judgment.
+            </span>
           </div>
         </footer>
       </div>
 
+      <CommandPalette />
       <DemoModeTour />
     </div>
   );

@@ -40,7 +40,7 @@ import { useAnalysisCase } from './AnalysisLayout';
 const TILE_ICONS = { subjects: Users, links: Network, flags: ShieldAlert, groups: Layers };
 const TILE_TONES = { subjects: 'teal', links: 'sky', flags: 'rose', groups: 'violet' };
 
-const SOURCE_COLORS = ['#0d9488', '#7c3aed', '#d97706', '#0284c7', '#e11d48', '#475569', '#059669'];
+const SOURCE_COLORS = ['var(--data-teal)', 'var(--data-violet)', 'var(--data-amber)', 'var(--data-sky)', 'var(--data-rose)', 'var(--ink-600)', 'var(--data-emerald)'];
 
 export function AnalysisOverviewPage() {
   const { basePath } = useAnalysisCase();
@@ -137,11 +137,17 @@ export function AnalysisOverviewPage() {
                 <div className="h-[260px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={activity} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                      <XAxis dataKey="week" tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false} />
-                      <YAxis tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--viz-grid)" vertical={false} />
+                      <XAxis dataKey="week" tick={{ fontSize: 11, fill: 'var(--data-neutral)' }} tickLine={false} axisLine={false} />
+                      <YAxis tick={{ fontSize: 11, fill: 'var(--data-neutral)' }} tickLine={false} axisLine={false} />
                       <RTooltip
-                        contentStyle={{ borderRadius: 10, border: '1px solid #e2e8f0', fontSize: 12 }}
+                        contentStyle={{
+                          borderRadius: 6,
+                          border: '1px solid var(--line)',
+                          background: 'var(--surface-raised)',
+                          color: 'var(--ink-800)',
+                          fontSize: 12,
+                        }}
                         labelFormatter={(v) => `Week of ${v}`}
                       />
                       <Legend wrapperStyle={{ fontSize: 12 }} />
@@ -150,7 +156,7 @@ export function AnalysisOverviewPage() {
                           key={s.key}
                           type="monotone"
                           dataKey={s.label}
-                          stroke={i === 0 ? '#0d9488' : '#7c3aed'}
+                          stroke={i === 0 ? 'var(--data-teal)' : 'var(--data-violet)'}
                           strokeWidth={2}
                           dot={{ r: 2.5 }}
                         />
@@ -317,11 +323,17 @@ export function AnalysisOverviewPage() {
                 <div className="h-[200px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={bySource} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                      <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false} />
-                      <YAxis tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--viz-grid)" vertical={false} />
+                      <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'var(--data-neutral)' }} tickLine={false} axisLine={false} />
+                      <YAxis tick={{ fontSize: 11, fill: 'var(--data-neutral)' }} tickLine={false} axisLine={false} />
                       <RTooltip
-                        contentStyle={{ borderRadius: 10, border: '1px solid #e2e8f0', fontSize: 12 }}
+                        contentStyle={{
+                          borderRadius: 6,
+                          border: '1px solid var(--line)',
+                          background: 'var(--surface-raised)',
+                          color: 'var(--ink-800)',
+                          fontSize: 12,
+                        }}
                         formatter={(v) => [v, 'Relationships']}
                       />
                       <Bar dataKey="value" radius={[4, 4, 0, 0]}>

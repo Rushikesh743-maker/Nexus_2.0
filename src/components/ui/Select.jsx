@@ -13,7 +13,7 @@ export function Select({ label, error, hint, required, options = [], children, c
           id={id}
           required={required}
           aria-invalid={Boolean(error)}
-          className={cn(inputBase, 'appearance-none pr-9', error && inputError, className)}
+          className={cn(inputBase, 'appearance-none pr-8', error && inputError, className)}
           {...props}
         >
           {options.map((opt) => (
@@ -23,7 +23,7 @@ export function Select({ label, error, hint, required, options = [], children, c
           ))}
           {children}
         </select>
-        <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-navy-300" aria-hidden />
+        <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-navy-300" aria-hidden />
       </div>
     </Field>
   );

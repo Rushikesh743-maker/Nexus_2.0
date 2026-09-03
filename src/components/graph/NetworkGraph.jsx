@@ -76,8 +76,8 @@ export function NetworkGraph({
               strokeWidth: 1 + (l.strength || 50) / 45,
               opacity: dim ? 0.05 : 0.75,
             },
-            labelStyle: { fill: '#627d98', fontSize: 10, fontWeight: 500 },
-            labelBgStyle: { fill: '#f8fafc', fillOpacity: 0.9 },
+            labelStyle: { fill: 'var(--ink-500)', fontSize: 10, fontWeight: 500 },
+            labelBgStyle: { fill: 'var(--surface-sunken)', fillOpacity: 0.9 },
             labelBgPadding: [4, 2],
             labelBgBorderRadius: 4,
           };
@@ -105,7 +105,7 @@ export function NetworkGraph({
         deleteKeyCode={null}
         elevateEdgesOnSelect
       >
-        <Background color="#cbd5e1" gap={18} size={1} />
+        <Background color="var(--ink-300)" gap={18} size={1} />
         <Controls showInteractive={false} position="bottom-right" />
       </ReactFlow>
     </div>

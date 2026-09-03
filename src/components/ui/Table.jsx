@@ -1,9 +1,17 @@
 import { cn } from '@/lib/utils';
 
+/**
+ * Tables.
+ *
+ * Dense but breathing: hairline row rules, a quiet sunken header, and figures
+ * set in the mono face with tabular numerals so columns of scores, counts and
+ * confidences align down the page. Rows are the primary reading surface in
+ * this product, so they get the tightest attention.
+ */
 export function Table({ className, children, ...props }) {
   return (
-    <div className="w-full overflow-x-auto">
-      <table className={cn('w-full min-w-[640px] border-collapse text-left text-sm', className)} {...props}>
+    <div className="w-full overflow-x-auto scrollbar-thin">
+      <table className={cn('w-full min-w-[640px] border-collapse text-left text-[13px]', className)} {...props}>
         {children}
       </table>
     </div>
@@ -15,7 +23,7 @@ export function THead({ className, children }) {
 }
 
 export function TBody({ className, children }) {
-  return <tbody className={cn('divide-y divide-slate-100', className)}>{children}</tbody>;
+  return <tbody className={cn('divide-y divide-line-soft', className)}>{children}</tbody>;
 }
 
 export function Tr({ className, onClick, selected, children, ...props }) {
@@ -24,8 +32,9 @@ export function Tr({ className, onClick, selected, children, ...props }) {
     <tr
       onClick={onClick}
       className={cn(
-        clickable && 'cursor-pointer transition-colors hover:bg-slate-50',
-        selected && 'bg-teal-50/50',
+        'transition-colors duration-100',
+        clickable && 'cursor-pointer hover:bg-slate-50',
+        selected && 'bg-slate-50',
         className
       )}
       {...props}
@@ -39,7 +48,7 @@ export function Th({ className, children, ...props }) {
   return (
     <th
       className={cn(
-        'border-b border-slate-200 bg-slate-50/80 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-navy-400',
+        'border-b border-line bg-slate-50 px-4 py-2 text-micro font-semibold uppercase text-navy-400',
         className
       )}
       {...props}
@@ -51,7 +60,7 @@ export function Th({ className, children, ...props }) {
 
 export function Td({ className, children, ...props }) {
   return (
-    <td className={cn('px-4 py-3 align-middle text-navy-700', className)} {...props}>
+    <td className={cn('px-4 py-2.5 align-middle text-navy-700', className)} {...props}>
       {children}
     </td>
   );

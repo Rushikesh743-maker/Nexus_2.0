@@ -6,6 +6,8 @@ import { Tabs } from '@/components/ui/Tabs';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { useTheme } from '@/context/ThemeContext';
 import { Badge } from '@/components/ui/Badge';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
@@ -51,6 +53,7 @@ export function SettingsPage() {
   useDocumentTitle('Settings');
   const { user } = useAuth();
   const toast = useToast();
+  const { theme: themeName } = useTheme();
 
   const [tab, setTab] = useState('profile');
   const [profile, setProfile] = useState({
@@ -186,7 +189,26 @@ export function SettingsPage() {
       )}
 
       {tab === 'preferences' && (
-        <Card className="max-w-2xl">
+        <div className="max-w-2xl space-y-5">
+        <Card>
+          <CardHeader
+            title="Appearance"
+            subtitle="Applies immediately and is remembered on this device. “System” keeps following the operating system."
+          />
+          <CardBody>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <p className="text-[13px] font-medium text-navy-700">Theme</p>
+                <p className="mt-0.5 text-[12px] text-navy-400">
+                  Currently showing the {themeName} theme.
+                </p>
+              </div>
+              <ThemeToggle />
+            </div>
+          </CardBody>
+        </Card>
+
+        <Card>
           <CardHeader title="Workspace preferences" subtitle="Stored per device." />
           <CardBody className="space-y-5">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -224,6 +246,7 @@ export function SettingsPage() {
             <Button onClick={savePrefs}>Save preferences</Button>
           </CardBody>
         </Card>
+        </div>
       )}
 
       {tab === 'data' && (

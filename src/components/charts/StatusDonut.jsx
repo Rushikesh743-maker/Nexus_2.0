@@ -29,7 +29,9 @@ export function StatusDonut({ data = [], centerLabel = 'Total', size = 176, clas
               formatter={(value, name) => [value, name]}
               contentStyle={{
                 borderRadius: 10,
-                border: '1px solid #e2e8f0',
+                border: '1px solid var(--line)',
+                background: 'var(--surface-raised)',
+                color: 'var(--ink-800)',
                 fontSize: 12,
                 boxShadow: '0 4px 6px -1px rgb(16 42 67 / 0.08)',
               }}

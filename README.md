@@ -25,7 +25,8 @@ review, timelines, an analyst insight feed and report tracking.
 | Charts             | Recharts 2                                           |
 | Icons              | Lucide React                                         |
 | HTTP               | Axios (service layer; unused while mocks are on)     |
-| Font               | Inter Variable, bundled via Fontsource (no CDN)      |
+| Type               | Instrument Serif · Instrument Sans · JetBrains Mono · Noto Sans Devanagari, bundled via Fontsource (no CDN) |
+| Theming            | CSS custom properties, light + dark + system         |
 | Analysis backend   | Python 3.10+ · FastAPI · NetworkX (see `backend/`)   |
 | Reports / crypto   | reportlab (PDF) · cryptography (AES-256-GCM audit)   |
 | OCR (optional)     | pytesseract + Tesseract, incl. the `hin` pack        |
@@ -223,8 +224,8 @@ Backend design notes live in `docs/` (ARCHITECTURE · DATA_MODEL · COMPLIANCE �
   file → original record) wired into contradictions and the network edge panel.
 * **Report preview** — print-style document view (summary, findings, evidence chain, gaps) with a
   mock Export PDF action.
-* **Global search** now spans investigations, entities, evidence, events, locations and
-  relationships, grouped with deep links. **Notification bell** shows the mock feed with unread
+* **Global search** spans investigations, entities, evidence, events, locations and
+  relationships, grouped with deep links — now reached through the ⌘K command palette. **Notification bell** shows the mock feed with unread
   counts and mark-all-read. **Settings**: Profile · Security · Notifications · Interface ·
   Data Preferences. **Demo Mode**: topbar button starts an 11-step guided walkthrough through the
   whole product using the same components and routes.
@@ -332,18 +333,20 @@ src/
 │   │                 HypothesisPanel · GapPanel · ImpactSimulator · ReevaluationCard · CopilotDrawer
 │   ├── reports/      ReportPreviewModal
 │   ├── demo/         DemoModeTour (guided 11-step walkthrough)
-│   ├── layout/       AppLayout · Sidebar · Topbar · UserMenu · GlobalSearch
+│   ├── layout/       AppLayout · Sidebar · Topbar · UserMenu · CommandPalette
 │   ├── map/          InvestigationMap (Leaflet + custom pins)
 │   ├── modals/       Modal · ConfirmDialog · CasePickerModal · Drawer
 │   ├── tables/       DataTable · Pagination
 │   ├── timeline/     EventTimeline
 │   └── ui/           Button · IconButton · Input · Textarea · Select · Badge · Card ·
+│                     ThemeToggle ·
 │                     Table · Tabs · Dropdown · Toast · Tooltip · EmptyState ·
 │                     LoadingState (Spinner/PageLoader/Skeleton) · ErrorState ·
 │                     Breadcrumb · PageHeader · Avatar · Logo
-├── context/          AuthContext · ToastContext
+├── context/          AuthContext · ToastContext · ThemeContext
 ├── hooks/            useDocumentTitle
-├── lib/              utils (cn, date formats) · constants (status/type metadata) · navigation
+├── lib/              utils (cn, date formats) · constants (status/type metadata) · navigation · cna
+├── styles/           tokens.css (light + dark design tokens)
 ├── mock/             mockUsers (incl. isolated demo dev account) · mockInvestigations ·
 │                     mockActivity · mockEntities · mockRelationships · mockEvidence ·
 │                     mockEvents · mockLocations · mockIntelligence · mockReports ·
@@ -412,12 +415,56 @@ contextually while an investigation is open, matching the investigation-scoped r
 
 ## Design system
 
-* Light theme: `slate-50` canvas, white cards, **dark navy** text (`navy` scale), **teal** accent.
-* Semantic states only: success / warning / danger / info / neutral (+ teal emphasis).
-* Subtle borders, small shadows, rounded-professional cards, dense but uncluttered tables.
-* Status/type metadata (labels, colors, icons) lives in `src/lib/constants.js` and is reused by
-  badges, graph edges, map pins and timeline markers.
-* The collapsible sidebar state and preferences persist to `localStorage`.
+**Thesis: chrome is monochrome; colour is data.**
+
+This product already spends colour on meaning — severity, entity type, source system,
+corroboration. Spending it again on the interface dilutes that signal, so the chrome is a warm
+near-monochrome ink scale and colour appears only where it carries information. The strongest
+affordance available is therefore contrast, not a hue: a primary button is a solid block of ink,
+which inverts to paper-on-ink in the dark theme.
+
+| Concern | Choice |
+| --- | --- |
+| Display | **Instrument Serif** — page titles and the headline only |
+| Interface | **Instrument Sans** — legible down to 11px |
+| Figures | **JetBrains Mono**, tabular numerals — every number in this product is evidence |
+| Devanagari | **Noto Sans Devanagari** — the corpus carries names in both scripts |
+| Ground | Warm paper `#f7f6f3` / warm charcoal `#100f0e` — never blue-slate, never pure black |
+| Structure | Hairline 1px rules; shadows almost entirely removed |
+| Radii | 4–6px — an instrument, not a toy |
+
+* **Themes.** Light, dark, and *system* (which keeps following the OS rather than freezing at its
+  first value). The choice persists per device, and an inline script in `index.html` resolves it
+  before first paint so there is no white flash in a dark room.
+* **How theming works.** `src/styles/tokens.css` defines every colour for both themes;
+  `tailwind.config.js` maps the palette names the components already use (`navy`, `slate`, `teal`,
+  `white`) onto those variables. That is why ~1,400 existing colour classes became theme-aware
+  without being rewritten, and it keeps one source of truth for colour.
+* **Charts and the graph** read their chrome from the same tokens (`--viz-grid`, `--viz-axis`,
+  `--viz-label`), so no visualisation is hardcoded to one theme.
+* Semantic states only: success / warning / danger / info / neutral. Status and type metadata lives
+  in `src/lib/constants.js` and `src/lib/cna.js`, reused by badges, graph edges, map pins and
+  timeline markers.
+* **Entity type is carried by shape as well as colour** in the graph — five types exceed the number
+  of hues that stay separable under colour-vision deficiency, so identity never rests on colour
+  alone.
+* The collapsible sidebar state, theme and preferences persist to `localStorage`.
+
+### Navigation
+
+Navigation was flattened from four levels to two. The sidebar previously repeated every case tab,
+so the same eight links existed in two places at once and grew a level each time a surface was
+added.
+
+* **Sidebar** — top-level destinations only, plus a compact *Open case* card that answers "which
+  case am I in" without becoming a second menu. Collapsible to a 68px rail.
+* **Command palette (⌘K, or `/`)** — one place to search *and* navigate. It searches investigations,
+  entities, evidence, events, locations and relationships, and offers jump targets; inside a case
+  the case's own screens are listed first. Arrow keys move, Enter opens, Escape closes.
+* **Top bar** — a breadcrumb trail, one search trigger, theme toggle, notifications and account.
+  The old inline search field is gone: it did half the job the palette now does in full.
+* **Case tabs** stay as the in-case navigation, and are omitted entirely when a case has only one
+  tab — a tab bar holding a single tab carries no choice.
 
 ## Swapping mocks for a real backend
 

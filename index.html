@@ -7,9 +7,34 @@
       name="description"
       content="NEXUS — investigation intelligence platform for case management, link analysis, geospatial and temporal review."
     />
-    <meta name="theme-color" content="#0f766e" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f7f6f3" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#100f0e" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>NEXUS · Investigation Intelligence</title>
+    <script>
+      /*
+       * Resolve the theme before first paint.
+       *
+       * Without this the page would render in the default light palette for a
+       * frame and then flip — a white flash in a dark room, which is exactly
+       * the sort of thing that makes a tool feel unfinished.
+       */
+      (function () {
+        try {
+          var pref = localStorage.getItem('nexus.theme') || 'system';
+          var dark =
+            pref === 'dark' ||
+            (pref === 'system' &&
+              window.matchMedia &&
+              window.matchMedia('(prefers-color-scheme: dark)').matches);
+          var theme = dark ? 'dark' : 'light';
+          document.documentElement.setAttribute('data-theme', theme);
+          document.documentElement.style.colorScheme = theme;
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

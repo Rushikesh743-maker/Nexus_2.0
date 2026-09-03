@@ -38,7 +38,10 @@ const CnaNode = memo(({ data }) => {
       <Handle type="target" position={Position.Top} className="!invisible" />
       <div className="flex items-center gap-2.5">
         <span
-          style={{ backgroundColor: `${meta.color}22`, color: meta.color }}
+          style={{
+            backgroundColor: `color-mix(in srgb, ${meta.color} 15%, transparent)`,
+            color: meta.color,
+          }}
           className={cn(
             'flex h-8 w-8 shrink-0 items-center justify-center text-[10px] font-bold',
             SHAPE_CLASS[meta.shape] || SHAPE_CLASS.circle
@@ -158,8 +161,8 @@ export function CnaNetworkGraph({
             source: e.source,
             target: e.target,
             label: e.types?.map(cnaEdgeLabel).join(' · '),
-            labelStyle: { fontSize: 10, fill: '#475569' },
-            labelBgStyle: { fill: '#ffffff', fillOpacity: 0.85 },
+            labelStyle: { fontSize: 10, fill: 'var(--ink-600)' },
+            labelBgStyle: { fill: 'var(--surface)', fillOpacity: 0.85 },
             labelBgPadding: [4, 2],
             labelBgBorderRadius: 4,
             style: { stroke: color, strokeWidth: width, opacity: 0.75 },
@@ -186,7 +189,7 @@ export function CnaNetworkGraph({
         onEdgeClick={(_, e) => onSelectEdge?.(e.data)}
         onPaneClick={() => onSelectNode?.(null)}
       >
-        <Background gap={18} color="#e2e8f0" />
+        <Background gap={18} color="var(--viz-grid)" />
         <Controls showInteractive={false} />
       </ReactFlow>
     </div>

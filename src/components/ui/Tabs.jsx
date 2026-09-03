@@ -1,9 +1,17 @@
 import { cn } from '@/lib/utils';
 
-/** Segmented tab control. */
+/**
+ * Segmented tab control.
+ *
+ * The active segment is a solid ink block rather than a raised white chip —
+ * consistent with the sidebar and buttons, and unambiguous on either ground.
+ */
 export function Tabs({ tabs = [], value, onChange, className }) {
   return (
-    <div className={cn('inline-flex flex-wrap items-center gap-1 rounded-lg bg-slate-100 p-1', className)} role="tablist">
+    <div
+      className={cn('inline-flex flex-wrap items-center gap-0.5 rounded-md border border-line p-0.5', className)}
+      role="tablist"
+    >
       {tabs.map((tab) => {
         const active = tab.id === value;
         return (
@@ -14,8 +22,10 @@ export function Tabs({ tabs = [], value, onChange, className }) {
             aria-selected={active}
             onClick={() => onChange?.(tab.id)}
             className={cn(
-              'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors',
-              active ? 'bg-white text-navy-900 shadow-sm' : 'text-navy-500 hover:text-navy-800'
+              'inline-flex items-center gap-1.5 rounded px-2.5 py-1.5 text-[12.5px] font-medium transition-colors duration-150',
+              active
+                ? 'bg-surface-inverse text-action-on'
+                : 'text-navy-500 hover:bg-slate-50 hover:text-navy-900'
             )}
           >
             {tab.icon && <tab.icon className="h-3.5 w-3.5" aria-hidden />}

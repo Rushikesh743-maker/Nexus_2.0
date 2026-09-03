@@ -1,0 +1,166 @@
+/**
+ * NEXUS design tokens.
+ * ─────────────────────────────────────────────────────────────────────────
+ * Design thesis: **chrome is monochrome; colour is data.**
+ *
+ * This product already spends colour on meaning — severity, entity type,
+ * source system, corroboration. Spending it again on the interface dilutes
+ * that signal, so the chrome is a warm near-monochrome ink scale and colour
+ * appears only where it carries information.
+ *
+ * Every token is defined for both themes here, and `tailwind.config.js` maps
+ * the palette names the components already use onto these variables. That is
+ * why `text-navy-800`, `bg-white` and `bg-teal-600` become theme-aware without
+ * a single class being rewritten across the app.
+ *
+ * The greys are warm-neutral rather than blue-slate: on a screen an analyst
+ * stares at for hours, a warm ground is easier to sit with, and it keeps the
+ * cool semantic hues (info, teal) clearly separable from the chrome.
+ */
+
+:root,
+[data-theme='light'] {
+  color-scheme: light;
+
+  /* ── Ground and surfaces ─────────────────────────────────────────────── */
+  --ground: #f7f6f3; /* page canvas — warm paper */
+  --surface: #fffefc; /* cards, panels, menus */
+  --surface-raised: #ffffff; /* popovers, drawers over surface */
+  --surface-sunken: #f2f1ed; /* wells, table headers, inset areas */
+  --surface-inverse: #171614; /* solid ink blocks */
+
+  /* ── Ink scale: 900 darkest → 50 faintest ───────────────────────────── */
+  --ink-950: #0b0a09;
+  --ink-900: #171614;
+  --ink-800: #2a2825;
+  --ink-700: #423f3a;
+  --ink-600: #5c584f;
+  --ink-500: #78736a;
+  --ink-400: #969087;
+  --ink-300: #b3ada3;
+  --ink-200: #d6d1c8;
+  --ink-100: #e8e4dc;
+  --ink-50: #f2f0ea;
+
+  /* ── Rules and edges ─────────────────────────────────────────────────── */
+  --line-strong: #d0cabf;
+  --line: #e2ddd3;
+  --line-soft: #ece8e0;
+
+  /* ── Accent: reserved for interactive affordance only ────────────────── */
+  --accent: #0f6f68;
+  --accent-strong: #0b544f;
+  --accent-muted: #4c9a94;
+  --accent-surface: #e6f1ef;
+  --accent-line: #a9cec9;
+  --accent-on: #ffffff;
+
+  /*
+   * Primary action. Under the thesis the strongest affordance is ink itself,
+   * not a hue — so a primary button is a solid block of ink on paper.
+   */
+  --action: #171614;
+  --action-hover: #2a2825;
+  --action-on: #fffefc;
+
+  /* ── Semantic data colours ───────────────────────────────────────────── */
+  --data-teal: #0d7a72;
+  --data-teal-soft: #dff0ee;
+  --data-violet: #6d43c8;
+  --data-violet-soft: #eae3fa;
+  --data-amber: #b4700a;
+  --data-amber-soft: #fbeed6;
+  --data-sky: #0369a1;
+  --data-sky-soft: #ddeefa;
+  --data-rose: #be123c;
+  --data-rose-soft: #fbe0e6;
+  --data-emerald: #047857;
+  --data-emerald-soft: #d9f0e6;
+  --data-neutral: #5c584f;
+  --data-neutral-soft: #eceae4;
+
+  /* ── Chart and graph chrome (read by JS for canvas/SVG) ──────────────── */
+  --viz-grid: #e2ddd3;
+  --viz-axis: #78736a;
+  --viz-label: #423f3a;
+  --viz-edge: #b3ada3;
+
+  /* ── Elevation. Minimal by design: rules carry structure, not shadows. ─ */
+  --shadow-card: 0 1px 2px rgb(23 22 20 / 0.04);
+  --shadow-raised: 0 1px 2px rgb(23 22 20 / 0.05), 0 8px 24px -8px rgb(23 22 20 / 0.12);
+  --shadow-overlay: 0 24px 60px -12px rgb(23 22 20 / 0.24);
+
+  --scrim: rgb(23 22 20 / 0.32);
+  --grain-opacity: 0.4;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  /*
+   * A warm charcoal rather than a blue-black. Pure black is avoided: it makes
+   * hairline rules disappear and raises halation on light text.
+   */
+  --ground: #100f0e;
+  --surface: #1a1917;
+  --surface-raised: #232120;
+  --surface-sunken: #151413;
+  --surface-inverse: #f2f0ea;
+
+  /* Ink inverts: 900 is now the *lightest* so `text-navy-900` stays "loudest". */
+  --ink-950: #fffefb;
+  --ink-900: #f4f2ed;
+  --ink-800: #e4e1da;
+  --ink-700: #cbc7bd;
+  --ink-600: #aaa59a;
+  --ink-500: #8e8880;
+  --ink-400: #746f68;
+  --ink-300: #5d5852;
+  --ink-200: #423f3a;
+  --ink-100: #302e2b;
+  --ink-50: #242220;
+
+  --line-strong: #46433d;
+  --line: #302e2b;
+  --line-soft: #262421;
+
+  --accent: #4fbdb2;
+  --accent-strong: #6fd3c8;
+  --accent-muted: #3f8f88;
+  --accent-surface: #17302e;
+  --accent-line: #2f5e59;
+  --accent-on: #0b1a19;
+
+  /* Inverted: the strongest affordance is now paper on ink. */
+  --action: #f4f2ed;
+  --action-hover: #ffffff;
+  --action-on: #171614;
+
+  /* Data hues lifted and desaturated so they hold on a dark ground. */
+  --data-teal: #4fbdb2;
+  --data-teal-soft: #16302e;
+  --data-violet: #a78bfa;
+  --data-violet-soft: #241f38;
+  --data-amber: #e0a44a;
+  --data-amber-soft: #33270f;
+  --data-sky: #58b4e8;
+  --data-sky-soft: #13293a;
+  --data-rose: #f4718f;
+  --data-rose-soft: #37161f;
+  --data-emerald: #48c193;
+  --data-emerald-soft: #122e23;
+  --data-neutral: #aaa59a;
+  --data-neutral-soft: #262421;
+
+  --viz-grid: #302e2b;
+  --viz-axis: #8e8880;
+  --viz-label: #cbc7bd;
+  --viz-edge: #5d5852;
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-raised: 0 1px 2px rgb(0 0 0 / 0.5), 0 8px 24px -8px rgb(0 0 0 / 0.6);
+  --shadow-overlay: 0 24px 60px -12px rgb(0 0 0 / 0.7);
+
+  --scrim: rgb(5 5 4 / 0.66);
+  --grain-opacity: 0.55;
+}

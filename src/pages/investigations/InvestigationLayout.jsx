@@ -148,10 +148,10 @@ export function InvestigationLayout() {
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded bg-navy-50 px-1.5 py-0.5 font-mono text-[11px] font-medium text-navy-500">{investigation.code}</span>
+                <span className="figure rounded bg-slate-50 px-1.5 py-0.5 text-[11px] font-medium text-navy-500">{investigation.code}</span>
                 <Badge variant={priority.variant}>{priority.label} priority</Badge>
               </div>
-              <h1 className="mt-2 text-xl font-semibold tracking-tight text-navy-900">{investigation.title}</h1>
+              <h1 className="mt-2.5 font-display text-[24px] leading-tight text-navy-900">{investigation.title}</h1>
               <p className="mt-1 text-[13px] font-medium text-navy-500">
                 {caseTypeLabel(investigation.caseType)}
                 <span className="mx-1.5 text-navy-200" aria-hidden>•</span>
@@ -226,8 +226,13 @@ export function InvestigationLayout() {
           )}
         </div>
 
-        {/* Sub navigation */}
-        <nav className="flex gap-1 overflow-x-auto border-t border-slate-100 px-3 scrollbar-thin" aria-label="Case sections">
+        {/*
+          Sub navigation. An analysis-backed case has exactly one tab, and a
+          tab bar holding a single tab is chrome that carries no choice — so it
+          is omitted and the analysis sub-nav becomes the only row.
+        */}
+        {tabsFor(investigation).length > 1 && (
+        <nav className="flex gap-0.5 overflow-x-auto border-t border-line-soft px-3 scrollbar-thin" aria-label="Case sections">
           {tabsFor(investigation).map((tab) => {
             const count = tab.stat ? investigation.stats[tab.stat] : null;
             return (
@@ -237,22 +242,25 @@ export function InvestigationLayout() {
                 end={tab.end}
                 className={({ isActive }) =>
                   cn(
-                    'flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-2.5 text-[13px] font-medium transition-colors',
+                    'flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-2.5 text-[12.5px] font-medium transition-colors duration-150',
                     isActive
-                      ? 'border-teal-600 text-teal-700'
-                      : 'border-transparent text-navy-400 hover:border-slate-200 hover:text-navy-700'
+                      ? 'border-navy-900 text-navy-900'
+                      : 'border-transparent text-navy-400 hover:text-navy-800'
                   )
                 }
               >
                 <tab.icon className="h-3.5 w-3.5" aria-hidden />
                 {tab.label}
                 {count !== null && count !== undefined && (
-                  <span className="rounded bg-slate-100 px-1.5 py-px text-[10px] font-semibold text-navy-500">{count}</span>
+                  <span className="figure rounded bg-slate-50 px-1.5 py-px text-[10px] font-semibold text-navy-500">
+                    {count}
+                  </span>
                 )}
               </NavLink>
             );
           })}
         </nav>
+        )}
       </Card>
 
       <Outlet context={{ investigation, refresh: load }} />

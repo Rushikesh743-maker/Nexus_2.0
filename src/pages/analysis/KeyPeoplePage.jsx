@@ -55,24 +55,30 @@ function AttributionChart({ subject }) {
       <div className="h-[210px]">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} layout="vertical" margin={{ top: 4, right: 16, left: 8, bottom: 0 }}>
-            <XAxis type="number" tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false} />
+            <XAxis type="number" tick={{ fontSize: 11, fill: 'var(--data-neutral)' }} tickLine={false} axisLine={false} />
             <YAxis
               type="category"
               dataKey="label"
               width={92}
-              tick={{ fontSize: 11, fill: '#334155' }}
+              tick={{ fontSize: 11, fill: 'var(--viz-label)' }}
               tickLine={false}
               axisLine={false}
             />
             <RTooltip
-              cursor={{ fill: '#f1f5f9' }}
-              contentStyle={{ borderRadius: 10, border: '1px solid #e2e8f0', fontSize: 12 }}
+              cursor={{ fill: 'var(--surface-sunken)' }}
+              contentStyle={{
+                          borderRadius: 6,
+                          border: '1px solid var(--line)',
+                          background: 'var(--surface-raised)',
+                          color: 'var(--ink-800)',
+                          fontSize: 12,
+                        }}
               formatter={(v, _n, item) => [formatScore(v, 4), COMPONENT_HINT[item.payload.key] || 'Contribution']}
             />
-            <ReferenceLine x={0} stroke="#94a3b8" />
+            <ReferenceLine x={0} stroke="var(--ink-400)" />
             <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={16}>
               {data.map((d) => (
-                <Cell key={d.key} fill={d.value >= 0 ? '#0d9488' : '#e11d48'} />
+                <Cell key={d.key} fill={d.value >= 0 ? 'var(--data-teal)' : 'var(--data-rose)'} />
               ))}
             </Bar>
           </BarChart>

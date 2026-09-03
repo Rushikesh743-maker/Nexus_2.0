@@ -32,10 +32,10 @@ export const APP_TAGLINE = 'Investigation Intelligence Platform';
 /* ---------------- Investigations ---------------- */
 
 export const INVESTIGATION_STATUS = {
-  active: { label: 'Active', variant: 'success', color: '#0d9488' },
-  pending_review: { label: 'Under review', variant: 'warning', color: '#d97706' },
-  closed: { label: 'Closed', variant: 'neutral', color: '#94a3b8' },
-  archived: { label: 'Archived', variant: 'neutral', color: '#cbd5e1' },
+  active: { label: 'Active', variant: 'success', color: 'var(--data-teal)' },
+  pending_review: { label: 'Under review', variant: 'warning', color: 'var(--data-amber)' },
+  closed: { label: 'Closed', variant: 'neutral', color: 'var(--ink-400)' },
+  archived: { label: 'Archived', variant: 'neutral', color: 'var(--ink-300)' },
 };
 
 export const CASE_TYPES = {
@@ -84,22 +84,22 @@ export const ACTIVITY_TYPES = {
 };
 
 export const PRIORITY = {
-  critical: { label: 'Critical', variant: 'danger', color: '#dc2626' },
-  high: { label: 'High', variant: 'warning', color: '#d97706' },
-  medium: { label: 'Medium', variant: 'info', color: '#0284c7' },
-  low: { label: 'Low', variant: 'neutral', color: '#64748b' },
+  critical: { label: 'Critical', variant: 'danger', color: 'var(--data-rose)' },
+  high: { label: 'High', variant: 'warning', color: 'var(--data-amber)' },
+  medium: { label: 'Medium', variant: 'info', color: 'var(--data-sky)' },
+  low: { label: 'Low', variant: 'neutral', color: 'var(--data-neutral)' },
 };
 
 /* ---------------- Entities ---------------- */
 
 export const ENTITY_TYPES = {
-  person: { label: 'Person', icon: User, color: '#0d9488' },
-  organization: { label: 'Organization', icon: Building2, color: '#6366f1' },
-  phone_number: { label: 'Phone number', icon: Phone, color: '#0284c7' },
-  bank_account: { label: 'Bank account', icon: Landmark, color: '#7c3aed' },
-  vehicle: { label: 'Vehicle', icon: Car, color: '#d97706' },
-  address: { label: 'Address', icon: MapPin, color: '#e11d48' },
-  asset: { label: 'Asset', icon: Package, color: '#64748b' },
+  person: { label: 'Person', icon: User, color: 'var(--data-teal)' },
+  organization: { label: 'Organization', icon: Building2, color: 'var(--data-violet)' },
+  phone_number: { label: 'Phone number', icon: Phone, color: 'var(--data-sky)' },
+  bank_account: { label: 'Bank account', icon: Landmark, color: 'var(--data-violet)' },
+  vehicle: { label: 'Vehicle', icon: Car, color: 'var(--data-amber)' },
+  address: { label: 'Address', icon: MapPin, color: 'var(--data-rose)' },
+  asset: { label: 'Asset', icon: Package, color: 'var(--data-neutral)' },
 };
 
 /**
@@ -108,36 +108,36 @@ export const ENTITY_TYPES = {
  * Deliberately neutral: NEXUS never labels a person; it tracks matches.
  */
 export const ENTITY_RESOLUTION = {
-  verified: { label: 'Verified', variant: 'success', color: '#0d9488' },
-  possible_match: { label: 'Possible match', variant: 'warning', color: '#d97706' },
-  unverified: { label: 'Unverified', variant: 'neutral', color: '#94a3b8' },
+  verified: { label: 'Verified', variant: 'success', color: 'var(--data-teal)' },
+  possible_match: { label: 'Possible match', variant: 'warning', color: 'var(--data-amber)' },
+  unverified: { label: 'Unverified', variant: 'neutral', color: 'var(--ink-400)' },
 };
 
 /* ---------------- Relationships ---------------- */
 
 export const RELATIONSHIP_TYPES = {
-  communication: { label: 'Communicated With', color: '#0ea5e9' },
-  associate: { label: 'Associated With', color: '#14b8a6' },
-  financial: { label: 'Transferred', color: '#8b5cf6' },
-  co_located: { label: 'Visited', color: '#ec4899' },
-  hierarchical: { label: 'Connected To', color: '#334e68' },
-  family: { label: 'Associated With', color: '#f59e0b' },
-  used: { label: 'Used', color: '#d97706' },
-  mentioned_in: { label: 'Mentioned In', color: '#94a3b8' },
+  communication: { label: 'Communicated With', color: 'var(--data-sky)' },
+  associate: { label: 'Associated With', color: 'var(--data-teal)' },
+  financial: { label: 'Transferred', color: 'var(--data-violet)' },
+  co_located: { label: 'Visited', color: 'var(--data-rose)' },
+  hierarchical: { label: 'Connected To', color: 'var(--ink-700)' },
+  family: { label: 'Associated With', color: 'var(--data-amber)' },
+  used: { label: 'Used', color: 'var(--data-amber)' },
+  mentioned_in: { label: 'Mentioned In', color: 'var(--ink-400)' },
 };
 
 /* ---------------- Evidence ---------------- */
 
 export const EVIDENCE_TYPES = {
-  document: { label: 'Document', icon: FileText, color: '#334e68' },
-  image: { label: 'Image', icon: Image, color: '#0d9488' },
-  video: { label: 'Video', icon: Video, color: '#6366f1' },
-  audio: { label: 'Audio', icon: Volume2, color: '#0284c7' },
-  call_record: { label: 'Call record', icon: PhoneCall, color: '#7c3aed' },
-  digital: { label: 'Digital', icon: HardDrive, color: '#0f766e' },
-  forensic: { label: 'Forensic', icon: Fingerprint, color: '#e11d48' },
-  financial_record: { label: 'Financial record', icon: IndianRupee, color: '#7c3aed' },
-  physical: { label: 'Physical', icon: Package, color: '#64748b' },
+  document: { label: 'Document', icon: FileText, color: 'var(--ink-700)' },
+  image: { label: 'Image', icon: Image, color: 'var(--data-teal)' },
+  video: { label: 'Video', icon: Video, color: 'var(--data-violet)' },
+  audio: { label: 'Audio', icon: Volume2, color: 'var(--data-sky)' },
+  call_record: { label: 'Call record', icon: PhoneCall, color: 'var(--data-violet)' },
+  digital: { label: 'Digital', icon: HardDrive, color: 'var(--accent-strong)' },
+  forensic: { label: 'Forensic', icon: Fingerprint, color: 'var(--data-rose)' },
+  financial_record: { label: 'Financial record', icon: IndianRupee, color: 'var(--data-violet)' },
+  physical: { label: 'Physical', icon: Package, color: 'var(--data-neutral)' },
 };
 
 /**
@@ -169,24 +169,24 @@ export const EVIDENCE_STATUS = {
 /* ---------------- Events ---------------- */
 
 export const EVENT_TYPES = {
-  meeting: { label: 'Meeting', icon: Users, color: '#0d9488' },
-  call: { label: 'Call', icon: PhoneCall, color: '#0284c7' },
-  transaction: { label: 'Transaction', icon: IndianRupee, color: '#7c3aed' },
-  travel: { label: 'Movement', icon: Truck, color: '#d97706' },
-  surveillance: { label: 'Surveillance', icon: Eye, color: '#e11d48' },
-  search: { label: 'Search', icon: Search, color: '#334e68' },
-  incident: { label: 'Incident', icon: ShieldAlert, color: '#dc2626' },
-  report: { label: 'Report', icon: FileText, color: '#64748b' },
+  meeting: { label: 'Meeting', icon: Users, color: 'var(--data-teal)' },
+  call: { label: 'Call', icon: PhoneCall, color: 'var(--data-sky)' },
+  transaction: { label: 'Transaction', icon: IndianRupee, color: 'var(--data-violet)' },
+  travel: { label: 'Movement', icon: Truck, color: 'var(--data-amber)' },
+  surveillance: { label: 'Surveillance', icon: Eye, color: 'var(--data-rose)' },
+  search: { label: 'Search', icon: Search, color: 'var(--ink-700)' },
+  incident: { label: 'Incident', icon: ShieldAlert, color: 'var(--data-rose)' },
+  report: { label: 'Report', icon: FileText, color: 'var(--data-neutral)' },
 };
 
 /* ---------------- Locations ---------------- */
 
 export const LOCATION_TYPES = {
-  crime_scene: { label: 'Crime scene', color: '#e11d48' },
-  surveillance: { label: 'Surveillance post', color: '#0d9488' },
-  residence: { label: 'Residence', color: '#0284c7' },
-  business: { label: 'Business', color: '#7c3aed' },
-  transit: { label: 'Transit point', color: '#d97706' },
+  crime_scene: { label: 'Crime scene', color: 'var(--data-rose)' },
+  surveillance: { label: 'Surveillance post', color: 'var(--data-teal)' },
+  residence: { label: 'Residence', color: 'var(--data-sky)' },
+  business: { label: 'Business', color: 'var(--data-violet)' },
+  transit: { label: 'Transit point', color: 'var(--data-amber)' },
 };
 
 /* ---------------- Intelligence insights ---------------- */

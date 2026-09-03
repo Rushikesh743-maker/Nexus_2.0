@@ -14,7 +14,7 @@ const EntityNode = memo(({ data }) => {
   const { entity, dimmed, highlighted } = data;
   const isEvidence = entity.type === 'evidence';
   const typeMeta = isEvidence
-    ? { label: 'Evidence', color: '#64748b' }
+    ? { label: 'Evidence', color: 'var(--data-neutral)' }
     : ENTITY_TYPES[entity.type] || ENTITY_TYPES.asset;
   const color = typeMeta.color;
   const resolution = ENTITY_RESOLUTION[entity.resolution] || ENTITY_RESOLUTION.unverified;
@@ -32,7 +32,7 @@ const EntityNode = memo(({ data }) => {
       <Handle type="target" position={Position.Top} className="!invisible" />
       <div className="flex items-center gap-2.5">
         <span
-          style={{ backgroundColor: `${color}1f`, color }}
+          style={{ backgroundColor: `color-mix(in srgb, ${color} 14%, transparent)`, color }}
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[11px] font-bold"
         >
           {isEvidence ? 'EV' : typeMeta.label.slice(0, 2).toUpperCase()}
@@ -53,7 +53,7 @@ const EntityNode = memo(({ data }) => {
         {!isEvidence && (
           <span
             className="h-2 w-2 shrink-0 rounded-full ring-2 ring-white"
-            style={{ backgroundColor: resolution.color || '#94a3b8' }}
+            style={{ backgroundColor: resolution.color || 'var(--ink-400)' }}
             title={`Resolution: ${resolution.label}`}
           />
         )}

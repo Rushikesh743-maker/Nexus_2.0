@@ -1,36 +1,35 @@
 import { cn } from '@/lib/utils';
 import { APP_NAME, APP_TAGLINE } from '@/lib/constants';
 
-export function Logo({ variant = 'dark', compact = false, className, withTagline = false }) {
-  const light = variant === 'light';
+/**
+ * Wordmark.
+ *
+ * The mark is a three-node link — the smallest possible drawing of the thing
+ * this product does. It is monochrome and inherits `currentColor`, so it sits
+ * correctly on paper, on ink, and in both themes without a variant per surface.
+ */
+export function Logo({ compact = false, className, withTagline = false }) {
   return (
-    <span className={cn('inline-flex items-center gap-2.5', className)}>
-      <svg viewBox="0 0 32 32" className="h-8 w-8 shrink-0" aria-hidden>
-        <path d="M16 2 28 9v14L16 30 4 23V9z" fill={light ? '#134e4a' : '#102a43'} />
-        <path d="M11 12h10M11 12l5 9M21 12l-5 9" stroke="#2dd4bf" strokeWidth="1.4" />
-        <circle cx="11" cy="12" r="2.4" fill="#2dd4bf" />
-        <circle cx="21" cy="12" r="2.4" fill="#2dd4bf" />
-        <circle cx="16" cy="21" r="2.4" fill="#2dd4bf" />
+    <span className={cn('inline-flex items-center gap-2.5 text-navy-900', className)}>
+      <svg viewBox="0 0 28 28" className="h-6 w-6 shrink-0" aria-hidden fill="none">
+        {/* Links first, so the nodes sit on top of them. */}
+        <path
+          d="M7 9.5 21 9.5 M7 9.5 14 19.5 M21 9.5 14 19.5"
+          stroke="currentColor"
+          strokeWidth="1.25"
+          strokeLinecap="round"
+          opacity="0.42"
+        />
+        <circle cx="7" cy="9.5" r="2.4" fill="currentColor" />
+        <circle cx="21" cy="9.5" r="2.4" fill="currentColor" opacity="0.55" />
+        <circle cx="14" cy="19.5" r="2.4" fill="currentColor" opacity="0.55" />
       </svg>
+
       {!compact && (
         <span className="flex flex-col leading-none">
-          <span
-            className={cn(
-              'text-[17px] font-bold tracking-[0.14em]',
-              light ? 'text-white' : 'text-navy-900'
-            )}
-          >
-            {APP_NAME}
-          </span>
+          <span className="text-[15px] font-semibold uppercase tracking-[0.2em]">{APP_NAME}</span>
           {withTagline && (
-            <span
-              className={cn(
-                'mt-1 text-[9px] font-medium uppercase tracking-[0.18em]',
-                light ? 'text-teal-300/80' : 'text-navy-300'
-              )}
-            >
-              {APP_TAGLINE}
-            </span>
+            <span className="label-micro mt-1.5 normal-case tracking-[0.16em]">{APP_TAGLINE}</span>
           )}
         </span>
       )}

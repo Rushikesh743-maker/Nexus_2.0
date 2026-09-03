@@ -15,10 +15,10 @@ const ICONS = {
 };
 
 const TONES = {
-  evidence_added: 'bg-sky-50 text-sky-700',
-  entity_match: 'bg-amber-50 text-amber-700',
-  relationship_detected: 'bg-violet-50 text-violet-700',
-  timeline_updated: 'bg-teal-50 text-teal-700',
+  evidence_added: 'bg-slate-50 text-navy-500',
+  entity_match: 'bg-slate-50 text-navy-500',
+  relationship_detected: 'bg-slate-50 text-navy-500',
+  timeline_updated: 'bg-slate-50 text-navy-500',
   report_generated: 'bg-slate-100 text-navy-500',
 };
 

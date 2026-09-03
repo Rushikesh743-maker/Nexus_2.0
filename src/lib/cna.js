@@ -30,30 +30,30 @@ import {
 
 /** Node types produced by `graph/build.py`. */
 export const CNA_NODE_TYPES = {
-  PERSON: { label: 'Person', icon: Users, tone: 'teal', color: '#0d9488', shape: 'circle' },
-  ORG: { label: 'Organisation', icon: Building2, tone: 'violet', color: '#7c3aed', shape: 'square' },
-  LOCATION: { label: 'Location', icon: MapPin, tone: 'amber', color: '#d97706', shape: 'diamond' },
-  VEHICLE: { label: 'Vehicle', icon: Car, tone: 'sky', color: '#0284c7', shape: 'hexagon' },
-  CASE: { label: 'Case record', icon: FileText, tone: 'navy', color: '#475569', shape: 'triangle' },
+  PERSON: { label: 'Person', icon: Users, tone: 'teal', color: 'var(--data-teal)', shape: 'circle' },
+  ORG: { label: 'Organisation', icon: Building2, tone: 'violet', color: 'var(--data-violet)', shape: 'square' },
+  LOCATION: { label: 'Location', icon: MapPin, tone: 'amber', color: 'var(--data-amber)', shape: 'diamond' },
+  VEHICLE: { label: 'Vehicle', icon: Car, tone: 'sky', color: 'var(--data-sky)', shape: 'hexagon' },
+  CASE: { label: 'Case record', icon: FileText, tone: 'navy', color: 'var(--ink-600)', shape: 'triangle' },
 };
 
 export function cnaNodeType(type) {
-  return CNA_NODE_TYPES[type] || { label: type || 'Unknown', icon: Network, tone: 'navy', color: '#64748b', shape: 'circle' };
+  return CNA_NODE_TYPES[type] || { label: type || 'Unknown', icon: Network, tone: 'navy', color: 'var(--data-neutral)', shape: 'circle' };
 }
 
 /** Edge vocabulary emitted by the graph builder. */
 export const CNA_EDGE_TYPES = {
-  CALLED: { label: 'Called', color: '#0d9488' },
-  TRANSACTED_WITH: { label: 'Transacted with', color: '#7c3aed' },
-  SEEN_AT: { label: 'Seen at', color: '#d97706' },
-  CO_NAMED_IN: { label: 'Co-named in', color: '#64748b' },
-  NAMED_IN: { label: 'Named in', color: '#94a3b8' },
-  REPORTS_TO: { label: 'Reports to', color: '#e11d48' },
-  INSTRUCTED_BY: { label: 'Instructed by', color: '#e11d48' },
-  SUPPLIED_BY: { label: 'Supplied by', color: '#0284c7' },
-  USED_VEHICLE: { label: 'Used vehicle', color: '#0284c7' },
-  LINKED_TO_ORG: { label: 'Linked to organisation', color: '#7c3aed' },
-  DIRECTOR_OF: { label: 'Director of', color: '#7c3aed' },
+  CALLED: { label: 'Called', color: 'var(--data-teal)' },
+  TRANSACTED_WITH: { label: 'Transacted with', color: 'var(--data-violet)' },
+  SEEN_AT: { label: 'Seen at', color: 'var(--data-amber)' },
+  CO_NAMED_IN: { label: 'Co-named in', color: 'var(--data-neutral)' },
+  NAMED_IN: { label: 'Named in', color: 'var(--ink-400)' },
+  REPORTS_TO: { label: 'Reports to', color: 'var(--data-rose)' },
+  INSTRUCTED_BY: { label: 'Instructed by', color: 'var(--data-rose)' },
+  SUPPLIED_BY: { label: 'Supplied by', color: 'var(--data-sky)' },
+  USED_VEHICLE: { label: 'Used vehicle', color: 'var(--data-sky)' },
+  LINKED_TO_ORG: { label: 'Linked to organisation', color: 'var(--data-violet)' },
+  DIRECTOR_OF: { label: 'Director of', color: 'var(--data-violet)' },
 };
 
 export function cnaEdgeLabel(type) {
@@ -62,7 +62,7 @@ export function cnaEdgeLabel(type) {
 
 export function cnaEdgeColor(types = []) {
   for (const t of types) if (CNA_EDGE_TYPES[t]) return CNA_EDGE_TYPES[t].color;
-  return '#94a3b8';
+  return 'var(--ink-400)';
 }
 
 /**

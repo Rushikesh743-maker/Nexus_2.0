@@ -13,6 +13,7 @@ function detectRouter() {
     return HashRouter;
   }
 }
+import { ThemeProvider } from '@/context/ThemeContext';
 import { AuthProvider } from '@/context/AuthContext';
 import { ToastProvider } from '@/context/ToastContext';
 import { ProtectedRoute, PublicOnlyRoute } from '@/router/guards';
@@ -49,61 +50,63 @@ export default function App() {
     <Router
       future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
     >
-      <AuthProvider>
-        <ToastProvider>
-          <Routes>
-            {/* Public */}
-            <Route
-              path="/login"
-              element={
-                <PublicOnlyRoute>
-                  <LoginPage />
-                </PublicOnlyRoute>
-              }
-            />
+      <ThemeProvider>
+        <AuthProvider>
+          <ToastProvider>
+            <Routes>
+              {/* Public */}
+              <Route
+                path="/login"
+                element={
+                  <PublicOnlyRoute>
+                    <LoginPage />
+                  </PublicOnlyRoute>
+                }
+              />
 
-            {/* Protected shell */}
-            <Route
-              element={
-                <ProtectedRoute>
-                  <AppLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/investigations" element={<InvestigationsPage />} />
-              <Route path="/investigations/new" element={<NewInvestigationPage />} />
-              <Route path="/investigations/:id" element={<InvestigationLayout />}>
-                <Route index element={<OverviewPage />} />
-                <Route path="workspace" element={<WorkspacePage />} />
-                <Route path="evidence" element={<EvidencePage />} />
-                <Route path="network" element={<NetworkPage />} />
-                <Route path="map" element={<MapPage />} />
-                <Route path="timeline" element={<TimelinePage />} />
-                <Route path="intelligence" element={<IntelligencePage />} />
-                <Route path="reports" element={<ReportsPage />} />
+              {/* Protected shell */}
+              <Route
+                element={
+                  <ProtectedRoute>
+                    <AppLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/investigations" element={<InvestigationsPage />} />
+                <Route path="/investigations/new" element={<NewInvestigationPage />} />
+                <Route path="/investigations/:id" element={<InvestigationLayout />}>
+                  <Route index element={<OverviewPage />} />
+                  <Route path="workspace" element={<WorkspacePage />} />
+                  <Route path="evidence" element={<EvidencePage />} />
+                  <Route path="network" element={<NetworkPage />} />
+                  <Route path="map" element={<MapPage />} />
+                  <Route path="timeline" element={<TimelinePage />} />
+                  <Route path="intelligence" element={<IntelligencePage />} />
+                  <Route path="reports" element={<ReportsPage />} />
 
-                {/* Criminal-network-analysis surfaces, served by backend/. */}
-                <Route path="analysis" element={<AnalysisLayout />}>
-                  <Route index element={<AnalysisOverviewPage />} />
-                  <Route path="graph" element={<AnalysisGraphPage />} />
-                  <Route path="people" element={<KeyPeoplePage />} />
-                  <Route path="patterns" element={<PatternsPage />} />
-                  <Route path="links" element={<LinkAnalysisPage />} />
-                  <Route path="pipeline" element={<PipelinePage />} />
-                  <Route path="ask" element={<AskPage />} />
-                  <Route path="system" element={<SystemPage />} />
+                  {/* Criminal-network-analysis surfaces, served by backend/. */}
+                  <Route path="analysis" element={<AnalysisLayout />}>
+                    <Route index element={<AnalysisOverviewPage />} />
+                    <Route path="graph" element={<AnalysisGraphPage />} />
+                    <Route path="people" element={<KeyPeoplePage />} />
+                    <Route path="patterns" element={<PatternsPage />} />
+                    <Route path="links" element={<LinkAnalysisPage />} />
+                    <Route path="pipeline" element={<PipelinePage />} />
+                    <Route path="ask" element={<AskPage />} />
+                    <Route path="system" element={<SystemPage />} />
+                  </Route>
                 </Route>
+                <Route path="/settings" element={<SettingsPage />} />
               </Route>
-              <Route path="/settings" element={<SettingsPage />} />
-            </Route>
 
-            {/* Fallback */}
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
-        </ToastProvider>
-      </AuthProvider>
+              {/* Fallback */}
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </ToastProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </Router>
   );
 }

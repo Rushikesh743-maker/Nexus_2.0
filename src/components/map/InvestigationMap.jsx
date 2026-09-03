@@ -24,8 +24,8 @@ function pinIcon(color) {
   return L.divIcon({
     className: 'nexus-pin',
     html: `<svg width="26" height="32" viewBox="0 0 24 30" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 1C6.9 1 3 4.9 3 10c0 6.3 9 18 9 18s9-11.7 9-18c0-5.1-3.9-9-9-9z" fill="${color}" stroke="#ffffff" stroke-width="1.4"/>
-      <circle cx="12" cy="10" r="3" fill="#ffffff"/>
+      <path d="M12 1C6.9 1 3 4.9 3 10c0 6.3 9 18 9 18s9-11.7 9-18c0-5.1-3.9-9-9-9z" fill="${color}" stroke="var(--surface)" stroke-width="1.4"/>
+      <circle cx="12" cy="10" r="3" fill="var(--surface)"/>
     </svg>`,
     iconSize: [26, 32],
     iconAnchor: [13, 30],
@@ -76,7 +76,7 @@ export function InvestigationMap({ locations = [], movementLegs = [], className,
               [leg.from.lat, leg.from.lng],
               [leg.to.lat, leg.to.lng],
             ]}
-            pathOptions={{ color: '#334e68', weight: 2, dashArray: '6 8', opacity: 0.8 }}
+            pathOptions={{ color: 'var(--ink-700)', weight: 2, dashArray: '6 8', opacity: 0.8 }}
           />
         ))}
         {movementLegs.map((leg, i) => (

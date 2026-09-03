@@ -120,10 +120,10 @@ export function DashboardPage() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
               {stats ? (
                 <>
-                  <StatCard icon={Briefcase} tone="teal" label="Active Investigations" value={stats.activeCases} sub={`${stats.underReview} under review`} to="/investigations" />
-                  <StatCard icon={FolderOpen} tone="sky" label="Evidence Items" value={stats.evidenceLogged} sub="with chain of custody" to="/investigations" />
-                  <StatCard icon={Share2} tone="violet" label="Entities" value={stats.entitiesTracked} sub={`${stats.relationshipsTracked} relationships mapped`} to="/investigations" />
-                  <StatCard icon={ClipboardCheck} tone="amber" label="Pending Reviews" value={stats.insightsPending} sub="insights awaiting analyst" to="/investigations" />
+                  <StatCard icon={Briefcase} label="Active Investigations" value={stats.activeCases} sub={`${stats.underReview} under review`} to="/investigations" />
+                  <StatCard icon={FolderOpen} label="Evidence Items" value={stats.evidenceLogged} sub="with chain of custody" to="/investigations" />
+                  <StatCard icon={Share2} label="Entities" value={stats.entitiesTracked} sub={`${stats.relationshipsTracked} relationships mapped`} to="/investigations" />
+                  <StatCard icon={ClipboardCheck} label="Pending Reviews" value={stats.insightsPending} sub="insights awaiting analyst" to="/investigations" />
                 </>
               ) : (
                 Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-[92px] rounded-xl" />)
@@ -179,19 +179,16 @@ export function DashboardPage() {
                         const status = INVESTIGATION_STATUS[inv.status] || INVESTIGATION_STATUS.closed;
                         return (
                           <Tr key={inv.id} onClick={() => navigate(`/investigations/${inv.id}`)}>
-                            <td className="max-w-[260px] px-4 py-3">
-                              <span className="flex items-center gap-2.5">
-                                <span className="shrink-0 rounded bg-navy-50 px-1.5 py-0.5 font-mono text-[11px] font-medium text-navy-500">
-                                  {inv.code}
-                                </span>
-                                <Link
-                                  to={`/investigations/${inv.id}`}
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="truncate text-[13px] font-medium text-navy-700 hover:text-teal-700"
-                                >
-                                  {inv.title}
-                                </Link>
-                              </span>
+                            <td className="max-w-[300px] px-4 py-2.5">
+                              <span className="figure block text-[10.5px] leading-none text-navy-400">{inv.code}</span>
+                              <Link
+                                to={`/investigations/${inv.id}`}
+                                onClick={(e) => e.stopPropagation()}
+                                className="mt-1 block truncate text-[13px] font-medium text-navy-800 transition-colors hover:text-accent"
+                                title={inv.title}
+                              >
+                                {inv.title}
+                              </Link>
                             </td>
                             <td className="px-4 py-3 text-[13px] text-navy-500">{inv.caseTypeLabel}</td>
                             <td className="px-4 py-3">

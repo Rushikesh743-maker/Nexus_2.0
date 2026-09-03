@@ -1,3 +1,5 @@
+@import './styles/tokens.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -7,18 +9,49 @@
     -webkit-tap-highlight-color: transparent;
     scroll-behavior: smooth;
   }
+
   body {
-    @apply bg-slate-50 font-sans text-navy-800 antialiased;
+    @apply bg-ground font-sans text-navy-800 antialiased;
+    /* Figures line up in columns everywhere they appear. */
+    font-feature-settings: 'cv05' 1, 'ss01' 1;
+    font-variant-numeric: tabular-nums;
   }
+
+  /* Page titles carry the editorial voice; everything else stays in the sans. */
+  .font-display {
+    font-feature-settings: normal;
+    letter-spacing: -0.01em;
+  }
+
+  /*
+   * Written as plain CSS rather than `@apply ring-*`: the accent is a CSS
+   * variable, and Tailwind's opacity modifier cannot slice into one.
+   */
   :focus-visible {
-    @apply outline-none ring-2 ring-teal-500/50 ring-offset-1 ring-offset-white;
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
   }
+
   ::selection {
-    @apply bg-teal-100 text-navy-900;
+    background: var(--accent-surface);
+    color: var(--ink-900);
   }
+
+  /* Native controls follow the theme rather than the OS default. */
+  input,
+  textarea,
+  select,
+  button {
+    font-family: inherit;
+  }
+
+  input[type='range'] {
+    accent-color: var(--accent);
+  }
+
   * {
     scrollbar-width: thin;
-    scrollbar-color: #bcccdc transparent;
+    scrollbar-color: var(--line-strong) transparent;
   }
 }
 
@@ -28,14 +61,89 @@
     height: 6px;
   }
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    @apply rounded-full bg-navy-200;
+    @apply rounded-full;
+    background: var(--line-strong);
   }
   .scrollbar-thin::-webkit-scrollbar-track {
     background: transparent;
   }
+
+  /* All figures are evidence: give them the mono face and aligned columns. */
+  .figure {
+    font-family: theme('fontFamily.mono');
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+
+  /* Field labels: small, uppercase, wide-tracked. */
+  .label-micro {
+    @apply text-micro font-semibold uppercase text-navy-400;
+  }
+
+  /* Hairline rule used in place of most card shadows. */
+  .hairline {
+    border-color: var(--line);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Paper grain.
+
+   A single tiled SVG noise layer over the page ground. It is what stops the
+   large empty areas of a minimal layout reading as flat dead space, and it is
+   fixed and pointer-transparent so it never interferes with content.
+   ───────────────────────────────────────────────────────────────────────── */
+.nexus-grain::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: var(--grain-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 @keyframes nexus-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.animate-fade-in {
+  animation: nexus-fade-in 0.18s cubic-bezier(0.2, 0.6, 0.2, 1) both;
+}
+
+@keyframes nexus-slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.animate-slide-in-right {
+  animation: nexus-slide-in-right 0.22s cubic-bezier(0.2, 0.6, 0.2, 1) both;
+}
+
+/* Staggered reveal for lists and grids on first paint. */
+@keyframes nexus-stagger {
   from {
     opacity: 0;
     transform: translateY(6px);
@@ -45,41 +153,43 @@
     transform: none;
   }
 }
-.animate-fade-in {
-  animation: nexus-fade-in 0.16s ease-out both;
+.stagger > * {
+  animation: nexus-stagger 0.32s cubic-bezier(0.2, 0.6, 0.2, 1) both;
 }
-
-@keyframes nexus-slide-in-right {
-  from {
-    opacity: 0;
-    transform: translateX(32px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-.animate-slide-in-right {
-  animation: nexus-slide-in-right 0.2s ease-out both;
-}
+.stagger > *:nth-child(1) { animation-delay: 0.02s; }
+.stagger > *:nth-child(2) { animation-delay: 0.06s; }
+.stagger > *:nth-child(3) { animation-delay: 0.1s; }
+.stagger > *:nth-child(4) { animation-delay: 0.14s; }
+.stagger > *:nth-child(5) { animation-delay: 0.18s; }
+.stagger > *:nth-child(6) { animation-delay: 0.22s; }
 
 /* ---------- Leaflet ---------- */
 .leaflet-container {
-  @apply z-0 bg-slate-100 font-sans;
+  @apply z-0 bg-slate-50 font-sans;
 }
-.leaflet-popup-content-wrapper {
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: var(--surface-raised);
+  color: var(--ink-800);
   @apply rounded-lg shadow-dropdown;
 }
 .leaflet-popup-content {
   @apply text-[13px] leading-snug text-navy-800;
   margin: 10px 12px;
 }
-.leaflet-bar a {
-  @apply text-navy-600;
+.leaflet-bar a,
+.leaflet-control-attribution {
+  background: var(--surface) !important;
+  color: var(--ink-600) !important;
+  border-color: var(--line) !important;
 }
 .nexus-pin {
   background: transparent !important;
   border: none !important;
+}
+/* Dark theme: tone the raster tiles down so pins stay the brightest thing. */
+[data-theme='dark'] .leaflet-tile-pane {
+  filter: invert(0.92) hue-rotate(180deg) brightness(0.92) contrast(0.9) saturate(0.7);
 }
 
 /* ---------- React Flow ---------- */
@@ -87,14 +197,37 @@
   @apply bg-transparent text-[10px] text-navy-300;
 }
 .react-flow__controls-button {
-  @apply border-navy-100 bg-white text-navy-500 hover:bg-slate-50;
+  background: var(--surface) !important;
+  border-color: var(--line) !important;
+  fill: var(--ink-600) !important;
+  color: var(--ink-600) !important;
+}
+.react-flow__controls-button:hover {
+  background: var(--surface-sunken) !important;
 }
 .react-flow__node.selected .nf-node {
-  @apply ring-2 ring-teal-500;
+  @apply ring-2;
+  --tw-ring-color: var(--accent);
 }
 .react-flow__edge-text {
   @apply text-[10px];
+  fill: var(--viz-label);
 }
 .react-flow__edge-textbg {
-  @apply fill-white;
+  fill: var(--surface);
+}
+
+/* ---------- Recharts ---------- */
+.recharts-cartesian-grid line {
+  stroke: var(--viz-grid);
+}
+.recharts-text {
+  fill: var(--viz-axis);
+}
+.recharts-default-tooltip {
+  background: var(--surface-raised) !important;
+  border-color: var(--line) !important;
+  color: var(--ink-800) !important;
+  border-radius: 6px !important;
+  box-shadow: var(--shadow-raised);
 }

@@ -22,10 +22,10 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { cn, timeAgo } from '@/lib/utils';
 
 const STATUS_COLORS = {
-  active: '#0d9488',
-  pending_review: '#d97706',
-  closed: '#94a3b8',
-  archived: '#cbd5e1',
+  active: 'var(--data-teal)',
+  pending_review: 'var(--data-amber)',
+  closed: 'var(--ink-400)',
+  archived: 'var(--ink-300)',
 };
 
 const statusOptions = [
