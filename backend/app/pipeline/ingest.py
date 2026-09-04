@@ -119,7 +119,24 @@ def _ocr_accuracy(fir_id: str, recovered: str) -> float | None:
 
 
 class Ingestor:
-    def __init__(self):
+    """
+    Reads the corpus and emits provenance-carrying entities and relations.
+
+    `exclude_sources` and `exclude_records` withhold evidence from the run.
+    They exist for the impact simulator: the honest way to answer "what would
+    this case look like without this record?" is to run the real pipeline
+    without it, so that identity resolution, the graph and every downstream
+    analysis recompute rather than being adjusted after the fact. Neither
+    argument mutates anything on disk.
+
+    `exclude_sources` withholds a whole document or feed by its source id
+    ("FIR/2026/0101", "CDR"); `exclude_records` withholds individual rows
+    within a feed by their own id (a CDR call id, a transaction id).
+    """
+
+    def __init__(self, exclude_sources=(), exclude_records=()):
+        self.exclude_sources = set(exclude_sources or ())
+        self.exclude_records = set(exclude_records or ())
         self.extractor = None
         self.resolver = EntityResolver()
         self.raw_relations: list[dict] = []      # keyed on raw name strings
@@ -188,6 +205,8 @@ class Ingestor:
     def load_criminal_records(self, extra_rows=()):
         for r in list(_csv("criminal_records.csv")) + list(extra_rows):
             sid = r["record_id"]
+            if sid in self.exclude_sources:
+                continue
             self.documents[sid] = {"source_type": "criminal_record", "record": r}
             self.resolver.observe(
                 r["name"], sid, "criminal_record", phones=[r["phone"]],
@@ -202,6 +221,8 @@ class Ingestor:
                          loc_key=None):
         for rec in records:
             sid = rec[id_key]
+            if sid in self.exclude_sources:
+                continue
             text = rec[text_key]
             # Devanagari numerals normalised for cue matching; the substitution is
             # 1:1 so character offsets remain valid against the original text.
@@ -344,6 +365,10 @@ class Ingestor:
 
     def load_cdr(self):
         rows = _csv("cdr.csv")
+        if "CDR" in self.exclude_sources:
+            rows = []
+        elif self.exclude_records:
+            rows = [r for r in rows if r["call_id"] not in self.exclude_records]
         agg = defaultdict(lambda: {"n": 0, "first": None, "last": None,
                                    "secs": 0, "cells": set(), "ids": []})
         imei_map = defaultdict(set)
@@ -365,7 +390,12 @@ class Ingestor:
         self.imei_map = {k: sorted(v) for k, v in imei_map.items() if len(v) > 1}
 
     def load_transactions(self):
-        self.txn_rows = _csv("transactions.csv")
+        rows = _csv("transactions.csv")
+        if "TXN" in self.exclude_sources:
+            rows = []
+        elif self.exclude_records:
+            rows = [r for r in rows if r["txn_id"] not in self.exclude_records]
+        self.txn_rows = rows
         self.documents["TXN"] = {"source_type": "transaction",
                                  "record": {"rows": len(self.txn_rows)}}
         for r in self.txn_rows:
@@ -441,5 +471,5 @@ class Ingestor:
         }
 
 
-def ingest_all():
-    return Ingestor().run()
+def ingest_all(exclude_sources=(), exclude_records=()):
+    return Ingestor(exclude_sources, exclude_records).run()

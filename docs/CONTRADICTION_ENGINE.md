@@ -328,10 +328,9 @@ findings and changes no engine behaviour. Synthetic ids carry a `/T` prefix or a
 
 ## 12. Future improvements
 
-- **Evidence Impact Simulator** (the natural next phase). The fields it needs
-  are already exposed: which evidence produced the contradiction, which
-  relationship and entities it affects, the confidence before and after, and
-  both evidence sets.
+- ~~Evidence Impact Simulator~~ — **built**, see `docs/IMPACT_SIMULATOR.md`. It
+  consumes this engine's provenance directly: the evidence drawer seeds a
+  simulation with exactly the records a contradiction cites.
 - Road-network travel times in place of straight-line distance.
 - Location uncertainty radii per source type, so a cell sector is not treated as
   a point.

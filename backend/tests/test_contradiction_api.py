@@ -108,3 +108,44 @@ def test_response_is_stable_across_calls(client):
     a = client.get("/api/contradictions", headers=INVESTIGATOR).json()
     b = client.get("/api/contradictions", headers=INVESTIGATOR).json()
     assert a["items"] == b["items"]
+
+
+# ------------------------------------------------------- impact simulator
+
+def test_impact_requires_something_to_withhold(client):
+    assert client.get("/api/impact", headers=INVESTIGATOR).status_code == 400
+
+
+def test_impact_rejects_an_unknown_source(client):
+    r = client.get("/api/impact?source_id=NOPE/1", headers=INVESTIGATOR)
+    assert r.status_code == 404
+
+
+def test_impact_returns_a_diff(client):
+    r = client.get("/api/impact?source_id=FIR/2026/0107", headers=INVESTIGATOR)
+    assert r.status_code == 200
+    body = r.json()
+    s = body["summary"]
+    assert s["links_after"] < s["links_before"]
+    assert body["withheld"][0]["source_id"] == "FIR/2026/0107"
+    assert "re-run" in body["method"]
+
+
+def test_impact_accepts_repeated_record_ids(client):
+    """The contradiction engine cites CDR rows, so the endpoint must take several."""
+    r = client.get("/api/impact?record_id=C000054&record_id=C000017", headers=INVESTIGATOR)
+    assert r.status_code == 200
+    body = r.json()
+    assert sorted(body["exclude_records"]) == ["C000017", "C000054"]
+    assert any(c["type"] == "timeline_conflict" for c in body["contradictions_resolved"])
+
+
+def test_impact_does_not_disturb_the_served_baseline(client):
+    """A simulation must not change what the other endpoints report afterwards."""
+    before = client.get("/api/stats", headers=INVESTIGATOR).json()
+    before_c = client.get("/api/contradictions", headers=INVESTIGATOR).json()["total"]
+    client.get("/api/impact?source_id=CDR", headers=INVESTIGATOR)
+    after = client.get("/api/stats", headers=INVESTIGATOR).json()
+    after_c = client.get("/api/contradictions", headers=INVESTIGATOR).json()["total"]
+    assert before == after
+    assert before_c == after_c

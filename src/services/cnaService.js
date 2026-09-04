@@ -43,7 +43,14 @@ export function setRoleToken(token) {
   if (CNA_ROLES.some((r) => r.token === token)) storage.setItem(ROLE_KEY, token);
 }
 
-const cna = axios.create({ baseURL: CNA_BASE_URL, timeout: 30000 });
+// `indexes: null` repeats a key for array values (`source_id=a&source_id=b`)
+// instead of axios's default `source_id[]=a`, which FastAPI does not read back
+// as a repeated query parameter.
+const cna = axios.create({
+  baseURL: CNA_BASE_URL,
+  timeout: 30000,
+  paramsSerializer: { indexes: null },
+});
 
 cna.interceptors.request.use((config) => {
   config.headers['X-Auth-Token'] = getRoleToken();
@@ -177,6 +184,17 @@ export const getContradictions = ({ severity, type } = {}) =>
 
 /** One contradiction with full provenance and the source documents behind it. */
 export const getContradiction = (id) => get(`/contradictions/${encodeURIComponent(id)}`);
+
+/**
+ * What the case would look like without a piece of evidence.
+ *
+ * The backend re-runs the whole pipeline with the record withheld and diffs
+ * the result — it does not adjust the finished graph, and it changes nothing.
+ * `sources` withholds whole documents or feeds; `records` withholds individual
+ * rows, which is the granularity contradictions cite their evidence at.
+ */
+export const getImpact = ({ sources = [], records = [] } = {}) =>
+  get('/impact', { source_id: sources, record_id: records });
 
 /* ── natural language ─────────────────────────────────────────────────── */
 

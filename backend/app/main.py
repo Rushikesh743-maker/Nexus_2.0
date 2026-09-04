@@ -25,6 +25,7 @@ from .graph.anomaly import AnomalyDetector
 from .graph.store import (CypherExportStore, JsonExportStore, export_graph,
                           describe_backends)
 from .intelligence.contradiction_engine import ContradictionEngine
+from .intelligence.impact_simulator import ImpactSimulator
 from .integrations import status as integrations_status, fetch as integrations_fetch
 from .intelligence import config as intel_config
 from .nlq import QueryParser
@@ -331,6 +332,40 @@ def contradiction(contradiction_id: str, user: Principal = Depends(current_user)
         if sid and sid not in docs and sid in s.graph.raw["documents"]:
             docs[sid] = s.graph.raw["documents"][sid]
     return {**item, "documents": docs}
+
+
+@app.get("/api/impact")
+def impact(source_id: list[str] = Query(default=[]),
+           record_id: list[str] = Query(default=[]),
+           user: Principal = Depends(current_user)):
+    """
+    What the case would look like if this evidence had never been filed.
+
+    The pipeline is re-run from the source files with the record withheld —
+    resolution, graph, analytics, patterns and contradictions all recompute —
+    and the result is diffed against the case as recorded. Nothing is modified:
+    the counterfactual is a separate graph and the baseline is only read.
+
+    `source_id` withholds a whole document or feed ("FIR/2026/0101", "CDR");
+    `record_id` withholds one row within a feed (a CDR call id, a transaction
+    id), which is the granularity the contradiction engine cites its evidence at.
+    """
+    require(user, "evidence:read")
+    if not source_id and not record_id:
+        raise HTTPException(
+            400, "Pass at least one source_id or record_id to withhold.")
+    s = load()
+    unknown = [sid for sid in source_id
+               if sid not in s.graph.raw["documents"]]
+    if unknown:
+        raise HTTPException(404, f"No such source record: {', '.join(unknown)}")
+    audit(user, "SIMULATE_EVIDENCE_REMOVAL",
+          {"sources": source_id, "records": record_id})
+    sim = ImpactSimulator(s.graph,
+                          baseline_contradictions=s.contradictions,
+                          baseline_findings=s.findings,
+                          baseline_analytics=s.analytics)
+    return sim.simulate(source_id, record_id)
 
 
 @app.get("/api/corroboration")

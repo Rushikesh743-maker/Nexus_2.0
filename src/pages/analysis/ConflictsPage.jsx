@@ -7,6 +7,7 @@ import { Drawer } from '@/components/modals/Drawer';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { AnalysisDisclosure, AnalysisError, AnalysisSkeleton, SyntheticNotice } from '@/components/analysis/AnalysisState';
 import { DocumentDrawer } from '@/components/analysis/DocumentDrawer';
+import { ImpactPanel } from '@/components/analysis/ImpactPanel';
 import { useCnaResource } from '@/hooks/useCnaResource';
 import { cnaService } from '@/services';
 import { cnaContradictionType, cnaSeverity, cnaSourceType, formatPercent } from '@/lib/cna';
@@ -458,6 +459,26 @@ function EvidenceDrawer({ contradiction, onClose, onDocument }) {
               </ul>
             </section>
           )}
+
+          {/* The contradiction's own provenance seeds the simulator: the records
+              that produced the conflict are exactly the ones worth withholding. */}
+          <section>
+            <h4 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-navy-300">
+              If this evidence were withheld
+            </h4>
+            <div className="mt-2">
+              <ImpactPanel
+                key={c.id}
+                sources={[...new Set((c.contradicting_evidence || [])
+                  .filter((r) => !r.record_id)
+                  .map((r) => r.source_id))]}
+                records={[...new Set((c.contradicting_evidence || [])
+                  .filter((r) => r.record_id)
+                  .map((r) => r.record_id))]}
+                label="the records behind this contradiction"
+              />
+            </div>
+          </section>
 
           <section>
             <h4 className="text-[10px] font-semibold uppercase tracking-[0.14em] text-navy-300">Source records</h4>

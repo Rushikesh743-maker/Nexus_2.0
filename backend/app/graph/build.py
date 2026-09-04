@@ -54,7 +54,13 @@ def _org_id(name: str) -> str:
 
 
 class CaseGraph:
-    def __init__(self):
+    def __init__(self, exclude_sources=(), exclude_records=()):
+        # Withheld evidence, for the impact simulator. A counterfactual graph is
+        # built by re-running the whole pipeline without these records, so
+        # resolution and every downstream analysis recompute honestly rather
+        # than being patched afterwards.
+        self.exclude_sources = set(exclude_sources or ())
+        self.exclude_records = set(exclude_records or ())
         self.G = nx.Graph()
         self.raw = None
         self.alias_index: dict[str, str] = {}   # lowercase name form -> node id
@@ -118,7 +124,7 @@ class CaseGraph:
 
     # --------------------------------------------------------------- build
     def build(self):
-        self.raw = ingest_all()
+        self.raw = ingest_all(self.exclude_sources, self.exclude_records)
 
         # 1. people ------------------------------------------------------
         for e in self.raw["entities"]:
@@ -295,5 +301,10 @@ class CaseGraph:
                 "merge_decisions": len(self.raw["resolution_decisions"])}
 
 
-def build_graph() -> CaseGraph:
-    return CaseGraph().build()
+def build_graph(exclude_sources=(), exclude_records=()) -> CaseGraph:
+    """
+    Build the case graph. With no arguments this is the case as recorded;
+    with either exclusion set it is a counterfactual — the same pipeline run
+    as if those records had never been filed.
+    """
+    return CaseGraph(exclude_sources, exclude_records).build()
