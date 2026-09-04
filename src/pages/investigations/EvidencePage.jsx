@@ -349,7 +349,12 @@ export function EvidencePage() {
         }}
         investigation={investigation}
         uploadedBy={user?.name || 'Unassigned'}
-        onUploaded={() => setReloadKey((k) => k + 1)}
+        onUploaded={() => {
+          setReloadKey((k) => k + 1);
+          // Re-read the case so the Network / Map / Timeline / Intelligence tab
+          // counts reflect what the ingestion pipeline just extracted.
+          refresh?.();
+        }}
       />
 
       {/* Details drawer */}

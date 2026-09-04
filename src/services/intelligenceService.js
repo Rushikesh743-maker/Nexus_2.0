@@ -1,13 +1,15 @@
 import { USE_MOCK_API, api, mockLatency, clone } from './api';
-import { mockEntities } from '@/mock/mockEntities';
-import { mockRelationships } from '@/mock/mockRelationships';
-import { mockEvents } from '@/mock/mockEvents';
-import { mockEventLinks } from '@/mock/mockEventLinks';
-import { mockLocations } from '@/mock/mockLocations';
-import { mockEvidence } from '@/mock/mockEvidence';
-import { mockInsights } from '@/mock/mockIntelligence';
-import { mockReports } from '@/mock/mockReports';
 import { mockUsers } from '@/mock/mockUsers';
+import {
+  entityStore,
+  relationshipStore,
+  eventStore,
+  locationStore,
+  insightStore,
+  reportStore,
+  evidenceStore,
+  eventLinks,
+} from './caseStore';
 import { ENTITY_RESOLUTION } from '@/lib/constants';
 import { hashString } from '@/lib/utils';
 
@@ -17,21 +19,20 @@ import { hashString } from '@/lib/utils';
  * in-memory mock store; API mode maps onto /investigations/:id/* endpoints.
  */
 
-const entityStore = [...mockEntities];
-const relationshipStore = [...mockRelationships];
-const eventStore = [...mockEvents];
-const locationStore = [...mockLocations];
-const insightStore = [...mockInsights];
-const reportStore = [...mockReports];
-
 const byDatetimeDesc = (a, b) => new Date(b.datetime) - new Date(a.datetime);
 
 /* ---------- events ---------- */
 
 /** Attach location/evidence links to an event (mock link table). */
 function enrichEvent(event) {
-  const link = mockEventLinks[event.id] || {};
-  return { ...event, locationId: link.locationId || null, evidenceId: link.evidenceId || null };
+  const link = eventLinks[event.id] || {};
+  // An extracted event already carries its own links; the link table is the
+  // fallback for the seeded fixtures.
+  return {
+    ...event,
+    locationId: event.locationId ?? link.locationId ?? null,
+    evidenceId: event.evidenceId ?? link.evidenceId ?? null,
+  };
 }
 
 /* ---------- entity directory (enriched entities for explorer/details) ---------- */
@@ -64,8 +65,9 @@ function enrichEntities(investigationId, entities, relationships, events) {
       ...entity,
       connections: degree[entity.id] || 0,
       eventsCount: eventCount[entity.id] || 0,
-      // Placeholder until the backend links evidence records to entities.
-      evidenceCount: 2 + (h % 14),
+      // Extracted entities know exactly which files they came from; seeded
+      // fixtures keep the deterministic placeholder.
+      evidenceCount: entity.sourceEvidenceIds ? entity.sourceEvidenceIds.length : 2 + (h % 14),
       ...resolutionFor(entity),
     };
   });
@@ -149,7 +151,9 @@ function enrichLocation(location, events) {
       ? linkedEvents.reduce((max, e) => (new Date(e.datetime) > new Date(max) ? e.datetime : max), linkedEvents[0].datetime)
       : location.lastActivityAt || null,
     // Placeholder until the pipeline geotags evidence records.
-    evidenceCount: 1 + (h % 7),
+    evidenceCount: location.extracted
+      ? new Set(linkedEvents.map((e) => e.evidenceId).filter(Boolean)).size
+      : 1 + (h % 7),
   };
 }
 
@@ -216,7 +220,7 @@ export async function getMovement(investigationId) {
  * them — clearly labelled in the UI.
  */
 function evidenceGraphNodes(investigationId, entityIds) {
-  const evidence = mockEvidence.filter((e) => e.investigationId === investigationId);
+  const evidence = evidenceStore.filter((e) => e.investigationId === investigationId);
   const nodes = evidence.map((e) => ({
     id: e.id,
     investigationId,

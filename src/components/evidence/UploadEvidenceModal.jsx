@@ -5,7 +5,7 @@ import { Button, IconButton } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Dropzone } from './Dropzone';
 import { evidenceService } from '@/services';
-import { SAMPLE_UPLOAD_FILES } from '@/mock/mockUploads';
+import { loadDemoCaseFiles } from '@/mock/mockUploads';
 import { useToast } from '@/context/ToastContext';
 import { formatFileSize } from '@/lib/utils';
 import { cn } from '@/lib/utils';
@@ -34,8 +34,11 @@ export function UploadEvidenceModal({ open, onClose, investigation, uploadedBy, 
   const addFiles = (files) => {
     setStaged((current) => {
       const existing = new Set(current.map((f) => f.name));
+      // The File itself has to survive staging — the ingestion pipeline reads
+      // the document's text from it. Dropping it here (as this used to) is why
+      // an upload could never populate the network, timeline or map.
       const additions = files
-        .map((file) => ({ name: file.name, size: file.size || 0 }))
+        .map((file) => ({ name: file.name, size: file.size || 0, blob: file instanceof File ? file : null }))
         .filter((file) => !existing.has(file.name));
       if (additions.length) {
         setStates((s) => {
@@ -60,8 +63,17 @@ export function UploadEvidenceModal({ open, onClose, investigation, uploadedBy, 
     setStaged((current) => current.filter((f) => f.name !== name));
   };
 
-  const addSamples = () => {
-    addFiles(SAMPLE_UPLOAD_FILES);
+  const [loadingDemo, setLoadingDemo] = useState(false);
+
+  const addSamples = async () => {
+    setLoadingDemo(true);
+    try {
+      addFiles(await loadDemoCaseFiles());
+    } catch (err) {
+      toast.error('Could not load the demo case file', err.message);
+    } finally {
+      setLoadingDemo(false);
+    }
   };
 
   const startUpload = async () => {
@@ -121,14 +133,27 @@ export function UploadEvidenceModal({ open, onClose, investigation, uploadedBy, 
       case 'done':
         if (state.status === 'processed')
           return (
-            <span className="flex items-center gap-1.5 text-[12px] font-medium text-emerald-700">
-              <CheckCircle2 className="h-4 w-4" aria-hidden /> Processed
+            <span className="flex flex-col items-end gap-0.5">
+              <span className="flex items-center gap-1.5 text-[12px] font-medium text-emerald-700">
+                <CheckCircle2 className="h-4 w-4" aria-hidden /> Processed
+              </span>
+              {state.extracted && (
+                <span className="text-[11px] text-navy-300">
+                  {state.extracted.entities} entities · {state.extracted.events} events ·{' '}
+                  {state.extracted.locations} locations
+                </span>
+              )}
             </span>
           );
         if (state.status === 'needs_review')
           return (
-            <span className="flex items-center gap-1.5 text-[12px] font-medium text-amber-700">
-              <AlertTriangle className="h-4 w-4" aria-hidden /> Needs review
+            <span className="flex flex-col items-end gap-0.5">
+              <span className="flex items-center gap-1.5 text-[12px] font-medium text-amber-700">
+                <AlertTriangle className="h-4 w-4" aria-hidden /> Needs review
+              </span>
+              {state.message && (
+                <span className="max-w-[220px] text-right text-[11px] text-navy-300">{state.message}</span>
+              )}
             </span>
           );
         if (state.status === 'failed')
@@ -184,11 +209,11 @@ export function UploadEvidenceModal({ open, onClose, investigation, uploadedBy, 
           <button
             type="button"
             onClick={addSamples}
-            disabled={uploading}
+            disabled={uploading || loadingDemo}
             className="flex items-center gap-1 text-[12px] font-medium text-teal-700 transition-colors hover:text-teal-800 disabled:opacity-50"
           >
             <Sparkles className="h-3.5 w-3.5" aria-hidden />
-            Add demo files (FIR_001.pdf, CDR.csv, Witness.pdf)
+            {loadingDemo ? 'Loading demo case file…' : 'Add demo case file (missing person bundle)'}
           </button>
         </div>
 

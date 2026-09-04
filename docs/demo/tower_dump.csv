@@ -1,0 +1,10 @@
+datetime,number,tower_location,lat,lng,activity
+2026-09-01 16:05,+91 98220 41776,Deccan Gymkhana,18.5169,73.8404,Outgoing call 4 min to +91 96570 22118
+2026-09-01 18:22,+91 98220 41776,Deccan Gymkhana,18.5169,73.8404,SMS to +91 95279 60034
+2026-09-01 19:26,+91 89830 77451,Swargate,18.5011,73.8586,Incoming call 11 min from +91 98220 41776
+2026-09-01 19:41,+91 98220 41776,Swargate,18.5011,73.8586,Handset registered on tower
+2026-09-01 20:14,+91 98220 41776,Swargate,18.5011,73.8586,Last registration before handset went silent
+2026-09-01 21:12,+91 89830 77451,Katraj,18.4529,73.8654,Handset registered on tower
+2026-09-01 21:40,+91 89830 77451,Katraj,18.4529,73.8654,Outgoing call 2 min to +91 95279 60034
+2026-09-02 03:05,+91 89830 77451,Satara,17.6805,74.0183,Handset registered on tower
+2026-09-02 14:00,+91 89830 77451,Satara,17.6805,74.0183,Handset registered on tower

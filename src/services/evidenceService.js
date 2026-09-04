@@ -1,7 +1,8 @@
 import { USE_MOCK_API, api, mockLatency, clone } from './api';
-import { mockEvidence } from '@/mock/mockEvidence';
 import { ACCEPTED_EXTENSIONS } from '@/lib/constants';
 import { hashString } from '@/lib/utils';
+import { evidenceStore as store } from './caseStore';
+import { ingestEvidence, refreshInsights } from './extraction/ingest';
 
 /**
  * Evidence service. Mock mode works on the in-memory mock store;
@@ -10,8 +11,6 @@ import { hashString } from '@/lib/utils';
  * UI components call these functions only — no transport or upload logic
  * lives in components.
  */
-
-const store = [...mockEvidence];
 
 const byCollectedDesc = (a, b) => new Date(b.collectedAt) - new Date(a.collectedAt);
 
@@ -43,16 +42,23 @@ const EXT_CATEGORY_MAP = {
   png: 'image',
 };
 
-function languageFor(ext, hash) {
-  if (!TEXTUAL_EXTENSIONS.includes(ext)) return null;
-  return ['English', 'Marathi', 'Hindi'][hash % 3];
+/**
+ * Language is detected from the file's own text by the ingestion pipeline
+ * (see `detectLanguage`). Non-textual formats simply have none.
+ */
+function languagePlaceholder(ext) {
+  return TEXTUAL_EXTENSIONS.includes(ext) ? null : null;
 }
 
-/** Deterministic per-file outcome so the demo shows all lifecycle states. */
-function outcomeFor(seed) {
-  const hash = hashString(seed);
-  if (hash % 13 === 0) return 'failed';
-  if (hash % 8 === 0) return 'needs_review';
+/**
+ * A file's terminal status is now the real outcome of the ingestion pipeline:
+ * a document we could read and pull records from is `processed`; one we could
+ * read but found nothing in, or could not text-extract at all, is flagged for
+ * a human (`needs_review`) rather than silently passed.
+ */
+function outcomeFor(result) {
+  if (!result.readable) return 'needs_review';
+  if (!result.entities && !result.events) return 'needs_review';
   return 'processed';
 }
 
@@ -179,49 +185,78 @@ export async function uploadFiles(investigationId, files, { onProgress, uploaded
       }
     }
 
-    // Phase 2 — simulated backend processing queue.
+    // Phase 2 — read and analyse the file for real.
     onProgress?.(file.name, { phase: 'processing' });
-    await new Promise((resolve) => setTimeout(resolve, 1500 + (hash % 1800)));
 
-    // Phase 3 — terminal state + record creation.
-    const outcome = outcomeFor(`${file.name}:${file.size}`);
     const now = new Date().toISOString();
-    const custodyAction =
-      outcome === 'failed'
-        ? 'Automated processing failed'
-        : outcome === 'needs_review'
-          ? 'Automated processing flagged this file for review'
-          : 'Automated processing completed';
-
     const record = {
       id: `ev-${Date.now()}-${created.length}`,
       investigationId,
-      refNo: `EV/${String(store.length + 1).padStart(3, '0')}`,
+      refNo: `EV/${String(store.filter((e) => e.investigationId === investigationId).length + 1).padStart(3, '0')}`,
       title: file.name,
       fileType: canonicalExt,
       category: null,
       type: EXT_CATEGORY_MAP[canonicalExt] || 'digital',
       size: Number(file.size) || 0,
-      language: languageFor(canonicalExt, hash),
-      status: outcome,
+      language: languagePlaceholder(canonicalExt),
+      status: 'processing',
       description: '',
       source: 'Direct upload',
       collectedBy: uploadedBy,
       collectedAt: now,
       tags: ['upload'],
       hash: randomHash(),
-      extractedEntities: outcome === 'processed' ? 2 + (hash % 22) : null,
-      extractedEvents: outcome === 'processed' ? 1 + (hash % 10) : null,
-      relationshipRefs: outcome === 'processed' ? hash % 5 : null,
-      chainOfCustody: [
-        { at: now, by: uploadedBy, action: 'Uploaded via NEXUS' },
-        { at: now, by: 'Processing pipeline (mock)', action: custodyAction },
-      ],
+      extractedEntities: null,
+      extractedEvents: null,
+      relationshipRefs: null,
+      chainOfCustody: [{ at: now, by: uploadedBy, action: 'Uploaded via NEXUS' }],
     };
+
+    // `file` is the browser File when one was dropped in; the demo-file
+    // shortcut stages name/size only, and the pipeline reports that plainly.
+    let result;
+    try {
+      result = await ingestEvidence(investigationId, file.blob || file, record);
+    } catch (err) {
+      result = { readable: false, reason: err.message, entities: 0, events: 0, locations: 0, relationships: 0 };
+    }
+
+    // Phase 3 — terminal state + record creation.
+    const outcome = outcomeFor(result);
+    const finishedAt = new Date().toISOString();
+    const custodyAction = result.readable
+      ? `Extraction complete — ${result.entities} entities, ${result.events} events, ${result.locations} locations, ${result.relationships} links`
+      : `Flagged for review — ${result.reason || 'no readable text'}`;
+
+    record.status = outcome;
+    record.language = result.language ?? record.language;
+    record.extractedEntities = result.entities;
+    record.extractedEvents = result.events;
+    record.relationshipRefs = result.relationships;
+    record.extractedLocations = result.locations;
+    record.processingNote = result.reason || null;
+    record.chainOfCustody.push({ at: finishedAt, by: 'NEXUS extraction pipeline', action: custodyAction });
+
     store.unshift(record);
     created.push(clone(record));
-    onProgress?.(file.name, { phase: 'done', status: outcome, record });
+    onProgress?.(file.name, {
+      phase: 'done',
+      status: outcome,
+      record,
+      extracted: {
+        entities: result.entities,
+        events: result.events,
+        locations: result.locations,
+        relationships: result.relationships,
+      },
+      message: result.reason || null,
+    });
   }
+
+  // Insights are derived from the whole case, so they are rebuilt once every
+  // file in the batch has landed.
+  if (created.length) refreshInsights(investigationId);
+
   return created;
 }
 

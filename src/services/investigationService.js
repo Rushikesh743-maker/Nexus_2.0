@@ -1,13 +1,16 @@
 import { USE_MOCK_API, api, mockLatency, clone } from './api';
 import { mockInvestigations } from '@/mock/mockInvestigations';
 import { mockActivity } from '@/mock/mockActivity';
-import { mockEntities } from '@/mock/mockEntities';
-import { mockRelationships } from '@/mock/mockRelationships';
-import { mockEvidence } from '@/mock/mockEvidence';
-import { mockEvents } from '@/mock/mockEvents';
-import { mockLocations } from '@/mock/mockLocations';
-import { mockInsights } from '@/mock/mockIntelligence';
 import { mockUsers } from '@/mock/mockUsers';
+import {
+  caseCounts,
+  entityStore,
+  relationshipStore,
+  evidenceStore,
+  eventStore,
+  locationStore,
+  insightStore,
+} from './caseStore';
 import { ACTIVITY_TYPES, caseTypeLabel } from '@/lib/constants';
 
 /**
@@ -26,14 +29,9 @@ function enrich(record) {
     caseTypeLabel: caseTypeLabel(record.caseType),
     lead: mockUsers.find((u) => u.id === record.leadId) || null,
     team: (record.teamIds || []).map((uid) => mockUsers.find((u) => u.id === uid)).filter(Boolean),
-    stats: {
-      entities: mockEntities.filter((x) => x.investigationId === id).length,
-      relationships: mockRelationships.filter((x) => x.investigationId === id).length,
-      evidence: mockEvidence.filter((x) => x.investigationId === id).length,
-      events: mockEvents.filter((x) => x.investigationId === id).length,
-      locations: mockLocations.filter((x) => x.investigationId === id).length,
-      insights: mockInsights.filter((x) => x.investigationId === id).length,
-    },
+    // Live counts from the shared case store, so records the ingestion
+    // pipeline creates show up in the tab badges immediately.
+    stats: caseCounts(id),
   };
 }
 
@@ -154,10 +152,10 @@ export async function getDashboardStats() {
   return clone({
     activeCases: statusCounts.active + statusCounts.pending_review,
     underReview: statusCounts.pending_review,
-    evidenceLogged: mockEvidence.length,
-    entitiesTracked: mockEntities.length,
-    relationshipsTracked: mockRelationships.length,
-    insightsPending: mockInsights.filter((i) => i.status === 'new').length,
+    evidenceLogged: evidenceStore.length,
+    entitiesTracked: entityStore.length,
+    relationshipsTracked: relationshipStore.length,
+    insightsPending: insightStore.filter((i) => i.status === 'new').length,
     statusCounts,
   });
 }
@@ -207,7 +205,7 @@ export async function getInvestigationActivity(investigationId, limit = 6) {
       to: '/investigations/' + investigationId,
     }));
 
-  const derived = mockEvents
+  const derived = eventStore
     .filter((e) => e.investigationId === investigationId)
     .sort((a, b) => new Date(b.datetime) - new Date(a.datetime))
     .slice(0, 4)
@@ -246,7 +244,7 @@ export async function globalSearch(query) {
       to: `/investigations/${c.id}`,
     }));
 
-  const entities = mockEntities
+  const entities = entityStore
     .filter((e) => [e.name, ...(e.aliases || []), e.role, e.notes || ''].join(' ').toLowerCase().includes(term))
     .slice(0, 5)
     .map((e) => ({
@@ -256,7 +254,7 @@ export async function globalSearch(query) {
       to: `/investigations/${e.investigationId}/network?entity=${e.id}`,
     }));
 
-  const evidence = mockEvidence
+  const evidence = evidenceStore
     .filter((ev) => [ev.title, ev.refNo, ev.source, ...(ev.tags || [])].join(' ').toLowerCase().includes(term))
     .slice(0, 4)
     .map((ev) => ({
@@ -266,7 +264,7 @@ export async function globalSearch(query) {
       to: `/investigations/${ev.investigationId}/evidence`,
     }));
 
-  const events = mockEvents
+  const events = eventStore
     .filter((e) => [e.title, e.source, e.locationName || ''].join(' ').toLowerCase().includes(term))
     .slice(0, 3)
     .map((e) => ({
@@ -276,7 +274,7 @@ export async function globalSearch(query) {
       to: `/investigations/${e.investigationId}/timeline`,
     }));
 
-  const locations = mockLocations
+  const locations = locationStore
     .filter((l) => [l.name, l.address || '', l.notes || ''].join(' ').toLowerCase().includes(term))
     .slice(0, 3)
     .map((l) => ({
@@ -286,16 +284,16 @@ export async function globalSearch(query) {
       to: `/investigations/${l.investigationId}/map`,
     }));
 
-  const relationships = mockRelationships
+  const relationships = relationshipStore
     .filter((r) => {
-      const a = mockEntities.find((e) => e.id === r.sourceId);
-      const b = mockEntities.find((e) => e.id === r.targetId);
+      const a = entityStore.find((e) => e.id === r.sourceId);
+      const b = entityStore.find((e) => e.id === r.targetId);
       return [r.label || '', a?.name || '', b?.name || ''].join(' ').toLowerCase().includes(term);
     })
     .slice(0, 3)
     .map((r) => {
-      const a = mockEntities.find((e) => e.id === r.sourceId);
-      const b = mockEntities.find((e) => e.id === r.targetId);
+      const a = entityStore.find((e) => e.id === r.sourceId);
+      const b = entityStore.find((e) => e.id === r.targetId);
       return {
         id: r.id,
         label: `${a?.name || 'Entity A'} ↔ ${b?.name || 'Entity B'}`,
