@@ -7,41 +7,15 @@
  * pipeline output, so when the backend is not running they report that plainly
  * instead of substituting invented data.
  *
- * Every call carries an `X-Auth-Token`. The backend checks the caller's
- * permission, writes a hash-chained audit entry, and only then answers — so
- * the role selected here genuinely changes what comes back.
+ * Every call carries the Supabase access token (same identity as the platform
+ * API). The backend verifies it, resolves the caller, writes a hash-chained
+ * audit entry, and only then answers — so the caller's role (from the
+ * verified identity) genuinely changes what comes back.
  */
 import axios from 'axios';
-import { storage } from '@/lib/storage';
+import { getAccessToken } from '@/lib/supabase';
 
 export const CNA_BASE_URL = import.meta.env.VITE_CNA_API_BASE_URL || '/cna-api';
-
-const ROLE_KEY = 'nexus.cna.role';
-
-/** The two demo principals the backend ships with. */
-export const CNA_ROLES = [
-  {
-    token: 'demo-investigator',
-    role: 'investigator',
-    label: 'Investigator',
-    description: 'Read case data, run queries, generate reports, file new records.',
-  },
-  {
-    token: 'demo-admin',
-    role: 'admin',
-    label: 'Administrator',
-    description: 'Everything an investigator can do, plus the audit log, bulk ingest and exports.',
-  },
-];
-
-export function getRoleToken() {
-  const stored = storage.getItem(ROLE_KEY);
-  return CNA_ROLES.some((r) => r.token === stored) ? stored : 'demo-investigator';
-}
-
-export function setRoleToken(token) {
-  if (CNA_ROLES.some((r) => r.token === token)) storage.setItem(ROLE_KEY, token);
-}
 
 // `indexes: null` repeats a key for array values (`source_id=a&source_id=b`)
 // instead of axios's default `source_id[]=a`, which FastAPI does not read back
@@ -52,8 +26,9 @@ const cna = axios.create({
   paramsSerializer: { indexes: null },
 });
 
-cna.interceptors.request.use((config) => {
-  config.headers['X-Auth-Token'] = getRoleToken();
+cna.interceptors.request.use(async (config) => {
+  const token = await getAccessToken();
+  if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 

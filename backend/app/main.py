@@ -32,8 +32,18 @@ from .nlq import QueryParser
 from .pipeline.ocr import capabilities as ocr_capabilities
 from .report import ReportBuilder
 from .summarise import default_summariser, status as summariser_status
+from .api.v1 import api_router as v1_api_router
+from .core import logging as nexus_logging
+from .core.config import get_settings
+from .core.database import db_ready, init_database
+from .core.errors import register_error_handlers
 
 STATIC = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+
+# Phase 1: honour LOG_FORMAT=json for structured (shipper-friendly) logs.
+_LOG_FORMAT = get_settings().log_format
+nexus_logging.setup_logging(json_output=(_LOG_FORMAT == "json"))
+_LOG = nexus_logging.get_logger("main")
 
 # Repository root — the NEXUS React app builds to <root>/dist.
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -47,9 +57,96 @@ def spa_available() -> bool:
 app = FastAPI(title="Criminal Network Analysis System",
               description="AI-assisted analysis of multi-source investigation data. "
                           "All data in this deployment is synthetic.",
-              version="0.1.0")
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"],
-                   allow_headers=["*"])
+              version="0.2.0")
+
+
+def _cors_origins() -> list[str]:
+    """CORS allow-list from settings (comma-separated CORS_ORIGINS).
+
+    Development (empty value): permissive, so the Vite dev server works
+    out of the box. Production: an empty value means NO cross-origin
+    access — explicit origins must be listed.
+    """
+    settings = get_settings()
+    raw = (settings.cors_origins or "").strip()
+    if not raw:
+        return ["*"] if settings.app_env != "production" else []
+    return [o.strip() for o in raw.split(",") if o.strip()]
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_cors_origins(),
+    allow_credentials="production" not in get_settings().app_env,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+def _security_headers_middleware():
+    """Response headers: CSP, nosniff, frame denial, referrer policy.
+
+    HSTS is added only in production (it is meaningless — and annoying —
+    over plain HTTP development).
+    """
+    settings = get_settings()
+
+    async def middleware(request, call_next):
+        response = await call_next(request)
+        if settings.security_csp:
+            response.headers["Content-Security-Policy"] = settings.security_csp
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "no-referrer"
+        if settings.app_env == "production":
+            response.headers["Strict-Transport-Security"] = (
+                "max-age=31536000; includeSubDomains")
+        return response
+
+    return middleware
+
+
+app.middleware("http")(_security_headers_middleware())
+
+
+def _request_id_middleware():
+    """Correlation ids: honor an incoming X-Request-ID, else generate one.
+
+    The id is stored in a context variable (attached to every nexus log
+    record) and echoed back in the response header, so a client can
+    follow a single request through the logs.
+    """
+
+    async def middleware(request, call_next):
+        rid = request.headers.get("x-request-id") or nexus_logging.new_request_id()
+        token = nexus_logging.set_request_context(rid)
+        try:
+            response = await call_next(request)
+            response.headers["X-Request-ID"] = rid
+            return response
+        finally:
+            nexus_logging.request_id_ctx.reset(token)
+
+    return middleware
+
+
+app.middleware("http")(_request_id_middleware())
+
+# Platform foundation API (JWT auth, cases, documents, …). Registered before
+# the SPA catch-all below, so /api/v1/* always wins over client-side routes.
+register_error_handlers(app)
+app.include_router(v1_api_router)
+
+
+@app.on_event("shutdown")
+def _shutdown():
+    # Phase 1: stop the in-process document worker cleanly.
+    try:
+        from .services import processing_worker
+
+        processing_worker.stop_inprocess_worker()
+    except Exception:  # pragma: no cover
+        pass
 
 
 class State:
@@ -85,7 +182,74 @@ def load(force=False):
 
 @app.on_event("startup")
 def _startup():
+    settings = get_settings()
+    _LOG.info("Starting NEXUS %s (env=%s)", settings.app_version, settings.app_env)
+
+    # Platform database: create tables + seed demo/synthetic data on first
+    # run. Failure here degrades the v1 API to 503s; it does not affect the
+    # analysis pipeline below.
+    if init_database():
+        try:
+            from .core.database import SessionLocal
+            from .seed import seed_if_empty
+
+            db = SessionLocal()
+            try:
+                if seed_if_empty(db):
+                    _LOG.info("Platform database seeded with synthetic data.")
+                # Stage 4: the smoke-verification demonstration cases
+                # (idempotent, INSERT-only; no-op when already present).
+                # Loaded by file path: scripts/ is not a package, and the
+                # script is the canonical seeder for these two cases.
+                import importlib.util
+                _stage4 = os.path.join(
+                    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                    "scripts", "seed_stage4_demo.py")
+                _spec = importlib.util.spec_from_file_location(
+                    "seed_stage4_demo", _stage4)
+                _mod = importlib.util.module_from_spec(_spec)
+                _spec.loader.exec_module(_mod)
+                for _label, _fn in (("Stage-4 empty demo case",
+                                     _mod.seed_empty_case),
+                                    ("Stage-4 contradiction demo case",
+                                     _mod.seed_contradiction_case)):
+                    _res = _fn(db)
+                    if _res != "exists":
+                        _LOG.info("%s ready (%s).", _label, _res)
+                # Stage 5: the multilingual demonstration case — idempotent,
+                # so it is added to pre-existing databases on first upgrade
+                # and skipped when already present.
+                from .services.demo_multiling import seed_demo_multiling
+                demo_case = seed_demo_multiling(db)
+                if demo_case is not None:
+                    _LOG.info("Multilingual demo case ready (%s).",
+                              demo_case.case_number)
+                # Stage 6: the end-to-end demonstration case (five real
+                # documents through the real pipeline) — idempotent.
+                from .services.demo_e2e import seed_demo_e2e
+                e2e_case = seed_demo_e2e(db)
+                if e2e_case is not None:
+                    _LOG.info("E2E demo case ready (%s).",
+                              e2e_case.case_number)
+            finally:
+                db.close()
+        except Exception as exc:  # noqa: BLE001 — logged, not raised
+            _LOG.warning("Platform seed failed: %s", exc)
+    else:
+        _LOG.warning("Platform API will return 503 until PostgreSQL is reachable.")
+
     load()
+
+    # Phase 1: the background document-processing worker. In development
+    # it lives with the API process; in production the same worker runs as
+    # a separate process (`python -m app.workers.document_worker`) and the
+    # API nodes can set WORKER_ENABLED=false.
+    if init_database():
+        from .services import processing_worker
+
+        _worker = processing_worker.start_inprocess_worker()
+        if _worker is not None:
+            _LOG.info("Document worker active (in-process).")
 
 
 # ------------------------------------------------------------------ helpers

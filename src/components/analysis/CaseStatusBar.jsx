@@ -1,28 +1,20 @@
-import { ChevronDown } from 'lucide-react';
 import { useCnaResource } from '@/hooks/useCnaResource';
 import { cnaService } from '@/services';
-import { CNA_ROLES } from '@/services/cnaService';
 import { cn } from '@/lib/utils';
 
 /**
- * Live status strip for the analysis case, mirroring the reference console's
- * header: the two figures an investigator checks constantly, and the role the
- * request is being made as.
+ * Live status strip for the analysis case: the two figures an investigator
+ * checks constantly, and the role the authenticated caller is acting as.
  *
- * The role selector is not cosmetic — the backend checks the permission and
- * writes an audit entry before it answers, so changing it here genuinely
- * changes what comes back.
+ * The role is not selectable — it is the caller's role, resolved by the
+ * backend from the verified Supabase identity (the request is authorized and
+ * audited as that role).
  */
-export function CaseStatusBar({ className, onRoleChange }) {
-  const { data, reload } = useCnaResource(() => cnaService.getStats(), []);
+export function CaseStatusBar({ className }) {
+  const { data } = useCnaResource(() => cnaService.getStats(), []);
+  const { data: me } = useCnaResource(() => cnaService.me(), []);
 
-  function pick(token) {
-    cnaService.setRoleToken(token);
-    reload();
-    onRoleChange?.(token);
-  }
-
-  const current = cnaService.getRoleToken();
+  const roleLabel = me?.role === 'admin' ? 'Administrator' : 'Investigator';
 
   return (
     <div className={cn('flex flex-wrap items-center gap-2', className)}>
@@ -56,24 +48,14 @@ export function CaseStatusBar({ className, onRoleChange }) {
         </span>
       </span>
 
-      {/* Role */}
-      <span className="relative inline-flex">
-        <select
-          value={current}
-          onChange={(e) => pick(e.target.value)}
-          aria-label="Acting as"
-          className="appearance-none rounded border border-line bg-surface py-1 pl-2.5 pr-7 font-mono text-[11px] text-navy-700 outline-none transition-colors hover:border-line-strong focus:border-accent"
-        >
-          {CNA_ROLES.map((r) => (
-            <option key={r.token} value={r.token}>
-              {r.label}
-            </option>
-          ))}
-        </select>
-        <ChevronDown
-          className="pointer-events-none absolute right-2 top-1/2 h-3 w-3 -translate-y-1/2 text-navy-400"
-          aria-hidden
-        />
+      {/* Role (read-only: the authenticated caller's role) */}
+      <span
+        className="inline-flex items-center gap-1.5 rounded border border-line px-2.5 py-1"
+        style={{ background: 'var(--surface-sunken)' }}
+        title={me?.name || undefined}
+      >
+        <span className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-navy-500">acting as</span>
+        <span className="font-mono text-[11px] text-navy-700">{me ? roleLabel : '—'}</span>
       </span>
     </div>
   );

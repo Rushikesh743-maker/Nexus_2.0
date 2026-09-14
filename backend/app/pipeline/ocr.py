@@ -80,6 +80,41 @@ def preferred_languages() -> str:
     return "eng+hin" if caps["hindi_available"] else "eng"
 
 
+def _ocr_image(img, langs: str, label: str) -> OcrResult:
+    """Shared OCR core for an already-opened PIL image."""
+    import pytesseract
+    from PIL import Image  # for Image.LANCZOS below
+    # modest preprocessing: greyscale and upscale small scans, which is where
+    # most of the accuracy on a phone photo of a page comes from
+    img = img.convert("L")
+    if min(img.size) < 1200:
+        img = img.resize((img.width * 2, img.height * 2), Image.LANCZOS)
+    text = pytesseract.image_to_string(img, lang=langs)
+    data = pytesseract.image_to_data(img, lang=langs,
+                                     output_type=pytesseract.Output.DICT)
+    confs = [int(c) for c in data.get("conf", []) if str(c).lstrip("-").isdigit()
+             and int(c) >= 0]
+    mean = round(sum(confs) / len(confs) / 100, 3) if confs else 0.0
+    return OcrResult(label, text.strip(), mean, langs, "tesseract", True)
+
+
+def ocr_bytes(data: bytes, label: str = "memory",
+              languages: str | None = None) -> OcrResult:
+    """OCR an in-memory image (PNG/JPEG/TIFF bytes). Used for scanned PDF
+    pages (rendered by the PDF rasterizer) and image uploads."""
+    caps = capabilities()
+    langs = languages or preferred_languages()
+    if not caps["available"]:
+        return OcrResult(label, "", 0.0, langs, "none", False,
+                         "Tesseract or Pillow not installed on this machine")
+    try:
+        from PIL import Image
+        import io
+        return _ocr_image(Image.open(io.BytesIO(data)), langs, label)
+    except Exception as e:                                 # pragma: no cover
+        return OcrResult(label, "", 0.0, langs, "tesseract", False, str(e))
+
+
 def ocr_document(path: str, languages: str | None = None) -> OcrResult:
     caps = capabilities()
     langs = languages or preferred_languages()
@@ -88,20 +123,7 @@ def ocr_document(path: str, languages: str | None = None) -> OcrResult:
                          "Tesseract or Pillow not installed on this machine")
     try:
         from PIL import Image
-        import pytesseract
-        img = Image.open(path)
-        # modest preprocessing: greyscale and upscale small scans, which is where
-        # most of the accuracy on a phone photo of a page comes from
-        img = img.convert("L")
-        if min(img.size) < 1200:
-            img = img.resize((img.width * 2, img.height * 2), Image.LANCZOS)
-        text = pytesseract.image_to_string(img, lang=langs)
-        data = pytesseract.image_to_data(img, lang=langs,
-                                         output_type=pytesseract.Output.DICT)
-        confs = [int(c) for c in data.get("conf", []) if str(c).lstrip("-").isdigit()
-                 and int(c) >= 0]
-        mean = round(sum(confs) / len(confs) / 100, 3) if confs else 0.0
-        return OcrResult(path, text.strip(), mean, langs, "tesseract", True)
+        return _ocr_image(Image.open(path), langs, path)
     except Exception as e:                                 # pragma: no cover
         return OcrResult(path, "", 0.0, langs, "tesseract", False, str(e))
 

@@ -4,6 +4,8 @@
  */
 export { default as api, API_BASE_URL, USE_MOCK_API } from './api';
 export * as authService from './authService';
+export * as v1 from './v1';
+export { V1Error } from './v1/client';
 export * as investigationService from './investigationService';
 export * as evidenceService from './evidenceService';
 export * as intelligenceService from './intelligenceService';

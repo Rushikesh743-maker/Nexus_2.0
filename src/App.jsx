@@ -19,7 +19,29 @@ import { ToastProvider } from '@/context/ToastContext';
 import { ProtectedRoute, PublicOnlyRoute } from '@/router/guards';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { LoginPage } from '@/pages/LoginPage';
+import { SignupPage } from '@/pages/SignupPage';
 import { DashboardPage } from '@/pages/DashboardPage';
+import { CasesPage } from '@/pages/cases/CasesPage';
+import { CaseLayout } from '@/pages/cases/CaseLayout';
+import { CaseOverviewPage } from '@/pages/cases/CaseOverviewPage';
+import { CaseGraphPage } from '@/pages/cases/CaseGraphPage';
+import { CaseEvidencePage } from '@/pages/cases/CaseEvidencePage';
+import { DocumentReviewPage } from '@/pages/cases/DocumentReviewPage';
+import { CaseDocumentsPage } from '@/pages/cases/CaseDocumentsPage';
+import { CaseEntitiesPage } from '@/pages/cases/CaseEntitiesPage';
+import { CaseEntityProfilePage } from '@/pages/cases/CaseEntityProfilePage';
+import { CaseRelationshipsPage } from '@/pages/cases/CaseRelationshipsPage';
+import { CaseImpactPage } from '@/pages/cases/CaseImpactPage';
+import { CaseReportsPage } from '@/pages/cases/CaseReportsPage';
+import { CaseReviewPage } from '@/pages/cases/CaseReviewPage';
+import { CaseTimelinePage } from '@/pages/cases/CaseTimelinePage';
+import { CaseMapPage } from '@/pages/cases/CaseMapPage';
+import { CaseHypothesesPage, CaseContradictionsPage, CaseGapsPage } from '@/pages/cases/CaseRecordPages';
+import { CaseSimulationPage } from '@/pages/cases/CaseSimulationPage';
+import { InvestigationIntelligencePage } from '@/pages/cases/InvestigationIntelligencePage';
+import { CopilotPage } from '@/pages/cases/CopilotPage';
+import { CaseCopilotPage } from '@/pages/cases/CaseCopilotPage';
+import { CaseSnapshotsPage } from '@/pages/cases/CaseSnapshotsPage';
 import { InvestigationsPage } from '@/pages/investigations/InvestigationsPage';
 import { NewInvestigationPage } from '@/pages/investigations/NewInvestigationPage';
 import { InvestigationLayout } from '@/pages/investigations/InvestigationLayout';
@@ -65,6 +87,14 @@ export default function App() {
                   </PublicOnlyRoute>
                 }
               />
+                <Route
+                  path="/signup"
+                  element={
+                    <PublicOnlyRoute>
+                      <SignupPage />
+                    </PublicOnlyRoute>
+                  }
+                />
 
               {/* Protected shell */}
               <Route
@@ -76,6 +106,33 @@ export default function App() {
               >
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/dashboard" element={<DashboardPage />} />
+
+                {/* Live case area — served by the platform API (backend/) */}
+                <Route path="/cases" element={<CasesPage />} />
+                <Route path="/cases/:caseId" element={<CaseLayout />}>
+                  <Route index element={<CaseOverviewPage />} />
+                  <Route path="documents" element={<CaseDocumentsPage />} />
+                  <Route path="entities" element={<CaseEntitiesPage />} />
+                  <Route path="entities/:entityId" element={<CaseEntityProfilePage />} />
+                  <Route path="relationships" element={<CaseRelationshipsPage />} />
+                  <Route path="graph" element={<CaseGraphPage />} />
+                  <Route path="evidence" element={<CaseEvidencePage />} />
+                  <Route path="documents/:documentId" element={<DocumentReviewPage />} />
+                  <Route path="timeline" element={<CaseTimelinePage />} />
+                  <Route path="map" element={<CaseMapPage />} />
+                  <Route path="impact" element={<CaseImpactPage />} />
+                  <Route path="hypotheses" element={<CaseHypothesesPage />} />
+                  <Route path="contradictions" element={<CaseContradictionsPage />} />
+                  <Route path="gaps" element={<CaseGapsPage />} />
+                  <Route path="simulation" element={<CaseSimulationPage />} />
+                  <Route path="investigation" element={<InvestigationIntelligencePage />} />
+                  <Route path="copilot" element={<CaseCopilotPage />} />
+                  <Route path="reports" element={<CaseReportsPage />} />
+                  <Route path="snapshots" element={<CaseSnapshotsPage />} />
+                  <Route path="review" element={<CaseReviewPage />} />
+                </Route>
+                <Route path="/copilot" element={<CopilotPage />} />
+
                 <Route path="/investigations" element={<InvestigationsPage />} />
                 <Route path="/investigations/new" element={<NewInvestigationPage />} />
                 <Route path="/investigations/:id" element={<InvestigationLayout />}>

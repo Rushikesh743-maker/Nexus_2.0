@@ -224,93 +224,121 @@ export async function getInvestigationActivity(investigationId, limit = 6) {
   return clone({ items, caseCode: inv?.code || '', total: items.length });
 }
 
-/** Cross-domain frontend search over investigations, entities and evidence. */
+/** Cross-domain investigation search over cases, entities, evidence, documents, relationships, findings, hypotheses, locations. */
 export async function globalSearch(query) {
-  if (!USE_MOCK_API) {
-    const { data } = await api.get('/search', { params: { query } });
-    return data;
+  const term = String(query || '').trim();
+  if (term.length < 1) {
+    return {
+      cases: [],
+      entities: [],
+      evidence: [],
+      documents: [],
+      events: [],
+      locations: [],
+      relationships: [],
+      findings: [],
+      hypotheses: [],
+      total: 0,
+    };
   }
-  await mockLatency(160);
-  const term = String(query).trim().toLowerCase();
-  if (term.length < 2) return { investigations: [], entities: [], evidence: [], total: 0 };
 
-  const investigations = store
-    .filter((c) => [c.title, c.code, c.caseType, c.jurisdiction, ...(c.tags || [])].join(' ').toLowerCase().includes(term))
-    .slice(0, 4)
-    .map((c) => ({
-      id: c.id,
-      label: c.title,
-      sub: `${c.code} · ${caseTypeLabel(c.caseType)}`,
-      to: `/investigations/${c.id}`,
-    }));
+  try {
+    const { search: v1Search } = await import('./v1/searchService');
+    const data = await v1Search(term);
+    const results = data?.results || [];
 
-  const entities = entityStore
-    .filter((e) => [e.name, ...(e.aliases || []), e.role, e.notes || ''].join(' ').toLowerCase().includes(term))
-    .slice(0, 5)
-    .map((e) => ({
-      id: e.id,
-      label: e.name,
-      sub: `${e.role || 'Entity'} · ${store.find((c) => c.id === e.investigationId)?.code || ''}`,
-      to: `/investigations/${e.investigationId}/network?entity=${e.id}`,
-    }));
+    const cases = results
+      .filter((r) => r.result_type === 'case')
+      .map((r) => ({ id: r.id, label: r.label, sub: r.sub, to: r.url || `/cases/${r.case_id}` }));
 
-  const evidence = evidenceStore
-    .filter((ev) => [ev.title, ev.refNo, ev.source, ...(ev.tags || [])].join(' ').toLowerCase().includes(term))
-    .slice(0, 4)
-    .map((ev) => ({
-      id: ev.id,
-      label: ev.title,
-      sub: `${ev.refNo} · ${store.find((c) => c.id === ev.investigationId)?.code || ''}`,
-      to: `/investigations/${ev.investigationId}/evidence`,
-    }));
+    const entities = results
+      .filter((r) => r.result_type === 'entity')
+      .map((r) => ({ id: r.id, label: r.label, sub: r.sub, to: r.url || `/cases/${r.case_id}/entities/${r.id}` }));
 
-  const events = eventStore
-    .filter((e) => [e.title, e.source, e.locationName || ''].join(' ').toLowerCase().includes(term))
-    .slice(0, 3)
-    .map((e) => ({
-      id: e.id,
-      label: e.title,
-      sub: `${new Date(e.datetime).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} · event`,
-      to: `/investigations/${e.investigationId}/timeline`,
-    }));
+    const evidence = results
+      .filter((r) => r.result_type === 'evidence')
+      .map((r) => ({ id: r.id, label: r.label, sub: r.sub, to: r.url || `/cases/${r.case_id}/evidence` }));
 
-  const locations = locationStore
-    .filter((l) => [l.name, l.address || '', l.notes || ''].join(' ').toLowerCase().includes(term))
-    .slice(0, 3)
-    .map((l) => ({
-      id: l.id,
-      label: l.name,
-      sub: l.address || 'Mapped location',
-      to: `/investigations/${l.investigationId}/map`,
-    }));
+    const documents = results
+      .filter((r) => r.result_type === 'document')
+      .map((r) => ({ id: r.id, label: r.label, sub: r.sub, to: r.url || `/cases/${r.case_id}/documents/${r.id}` }));
 
-  const relationships = relationshipStore
-    .filter((r) => {
-      const a = entityStore.find((e) => e.id === r.sourceId);
-      const b = entityStore.find((e) => e.id === r.targetId);
-      return [r.label || '', a?.name || '', b?.name || ''].join(' ').toLowerCase().includes(term);
-    })
-    .slice(0, 3)
-    .map((r) => {
-      const a = entityStore.find((e) => e.id === r.sourceId);
-      const b = entityStore.find((e) => e.id === r.targetId);
-      return {
-        id: r.id,
-        label: `${a?.name || 'Entity A'} ↔ ${b?.name || 'Entity B'}`,
-        sub: r.label || 'Relationship',
-        to: `/investigations/${r.investigationId}/network?entity=${r.sourceId}`,
-      };
+    const relationships = results
+      .filter((r) => r.result_type === 'relationship')
+      .map((r) => ({ id: r.id, label: r.label, sub: r.sub, to: r.url || `/cases/${r.case_id}/relationships` }));
+
+    const findings = results
+      .filter((r) => r.result_type === 'finding')
+      .map((r) => ({ id: r.id, label: r.label, sub: r.sub, to: r.url || `/cases/${r.case_id}/investigation` }));
+
+    const hypotheses = results
+      .filter((r) => r.result_type === 'hypothesis')
+      .map((r) => ({ id: r.id, label: r.label, sub: r.sub, to: r.url || `/cases/${r.case_id}/hypotheses` }));
+
+    const locations = results
+      .filter((r) => r.result_type === 'location')
+      .map((r) => ({ id: r.id, label: r.label, sub: r.sub, to: r.url || `/cases/${r.case_id}/map` }));
+
+    return {
+      cases,
+      investigations: cases,
+      entities,
+      evidence,
+      documents,
+      relationships,
+      findings,
+      hypotheses,
+      locations,
+      events: [],
+      total: results.length,
+    };
+  } catch (err) {
+    if (!USE_MOCK_API) throw err;
+    // Fallback if backend is offline during test/preview
+    await mockLatency(100);
+    const low = term.toLowerCase();
+    const investigations = store
+      .filter((c) => [c.title, c.code, c.caseType, c.jurisdiction, ...(c.tags || [])].join(' ').toLowerCase().includes(low))
+      .slice(0, 4)
+      .map((c) => ({
+        id: c.id,
+        label: c.title,
+        sub: `${c.code} · ${caseTypeLabel(c.caseType)}`,
+        to: `/investigations/${c.id}`,
+      }));
+
+    const entities = entityStore
+      .filter((e) => [e.name, ...(e.aliases || []), e.role, e.notes || ''].join(' ').toLowerCase().includes(low))
+      .slice(0, 5)
+      .map((e) => ({
+        id: e.id,
+        label: e.name,
+        sub: `${e.role || 'Entity'} · ${store.find((c) => c.id === e.investigationId)?.code || ''}`,
+        to: `/investigations/${e.investigationId}/network?entity=${e.id}`,
+      }));
+
+    const evidence = evidenceStore
+      .filter((ev) => [ev.title, ev.refNo, ev.source, ...(ev.tags || [])].join(' ').toLowerCase().includes(low))
+      .slice(0, 4)
+      .map((ev) => ({
+        id: ev.id,
+        label: ev.title,
+        sub: `${ev.refNo} · ${store.find((c) => c.id === ev.investigationId)?.code || ''}`,
+        to: `/investigations/${ev.investigationId}/evidence`,
+      }));
+
+    return clone({
+      cases: investigations,
+      investigations,
+      entities,
+      evidence,
+      documents: [],
+      relationships: [],
+      findings: [],
+      hypotheses: [],
+      locations: [],
+      events: [],
+      total: investigations.length + entities.length + evidence.length,
     });
-
-  return clone({
-    investigations,
-    entities,
-    evidence,
-    events,
-    locations,
-    relationships,
-    total:
-      investigations.length + entities.length + evidence.length +
-      events.length + locations.length + relationships.length,
-  });
+  }
 }

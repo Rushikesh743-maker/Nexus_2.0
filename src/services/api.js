@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { storage } from '@/lib/storage';
+import { getAccessToken } from '@/lib/supabase';
 
 /**
  * Shared API plumbing.
@@ -9,25 +9,12 @@ import { storage } from '@/lib/storage';
  *  - in API mode it would call `api` (Axios) with the same return shapes.
  *
  * Swap strategy: set VITE_USE_MOCK_API=false and VITE_API_BASE_URL — no UI changes.
+ * Authentication is Supabase Auth: the interceptor attaches the Supabase
+ * access token (the same identity the rest of the app uses).
  */
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 export const USE_MOCK_API = (import.meta.env.VITE_USE_MOCK_API ?? 'true') !== 'false';
-
-const SESSION_KEY = 'nexus.session';
-
-export function getStoredSession() {
-  try {
-    return JSON.parse(storage.getItem(SESSION_KEY));
-  } catch {
-    return null;
-  }
-}
-
-export function storeSession(session) {
-  if (session) storage.setItem(SESSION_KEY, JSON.stringify(session));
-  else storage.removeItem(SESSION_KEY);
-}
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -35,10 +22,10 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-api.interceptors.request.use((config) => {
-  const session = getStoredSession();
-  if (session?.token) {
-    config.headers.Authorization = `Bearer ${session.token}`;
+api.interceptors.request.use(async (config) => {
+  const token = await getAccessToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });

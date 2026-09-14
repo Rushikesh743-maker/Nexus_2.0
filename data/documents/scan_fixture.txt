@@ -1,0 +1,5 @@
+FIR (scanned copy) - SYNTHETIC DEMONSTRATION DATA
+On 2026-09-03 10:00, Suresh Yadav was seen at Chembur.
+On 2026-09-03 10:20, Suresh Yadav was seen at Kurla.
+Mobile 9000000955 was recovered from the scene.
+Vehicle MH09AB1234 was parked nearby.

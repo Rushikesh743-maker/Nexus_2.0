@@ -10,9 +10,10 @@ MultiGraph-flavoured property graph. Every edge stores:
 ask "why do you say these two people are connected?" and get back the exact
 records that produced the edge.
 
-NetworkX is used so the prototype runs with no database to install. The
-`GraphStore` API is intentionally narrow (add_node / add_edge / query) so the
-same code can be pointed at Neo4j for a production deployment.
+NetworkX is used so the graph intelligence runs in-process with no graph
+database to install — the relational data (Supabase/Postgres) is the source
+of truth, and the graph is built from it. The `GraphStore` API is the export
+seam (Cypher / JSON) for handing the graph to other tools.
 """
 
 from __future__ import annotations

@@ -13,15 +13,16 @@ import { cn } from '@/lib/utils';
 /** Where you are, as a short trail rather than a single word. */
 function Trail() {
   const location = useLocation();
-  const { title, caseId } = getPageContext(location.pathname);
+  const { title, caseId, caseBase = '/investigations' } = getPageContext(location.pathname);
 
   const crumbs = [];
   if (caseId) {
-    crumbs.push({ label: 'Investigations', to: '/investigations' });
+    const registryLabel = caseBase === '/cases' ? 'Cases' : 'Investigations';
+    crumbs.push({ label: registryLabel, to: caseBase });
     const rest = location.pathname.split('/').slice(3).filter(Boolean);
     const section = rest[0];
     const sub = rest[1];
-    crumbs.push({ label: 'Case file', to: `/investigations/${caseId}` });
+    crumbs.push({ label: 'Case file', to: `${caseBase}/${caseId}` });
     if (section) crumbs.push({ label: section.replace(/-/g, ' ') });
     if (sub) crumbs.push({ label: sub.replace(/-/g, ' ') });
   } else {

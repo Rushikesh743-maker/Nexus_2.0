@@ -22,7 +22,6 @@ import { CapabilityStrip } from '@/components/analysis/CapabilityStrip';
 import { useCnaResource } from '@/hooks/useCnaResource';
 import { useToast } from '@/context/ToastContext';
 import { cnaService } from '@/services';
-import { CNA_ROLES } from '@/services/cnaService';
 import { cn, formatDateTime } from '@/lib/utils';
 
 const TABS = [
@@ -32,74 +31,23 @@ const TABS = [
   { id: 'storage', label: 'Storage & export', icon: Database },
 ];
 
-/** Role switcher — the backend genuinely enforces this, it is not cosmetic. */
-function RoleSwitcher({ onChange }) {
-  const [token, setToken] = useState(cnaService.getRoleToken());
-
-  function pick(next) {
-    cnaService.setRoleToken(next);
-    setToken(next);
-    onChange?.(next);
-  }
-
-  return (
-    <div className="space-y-2">
-      {CNA_ROLES.map((r) => (
-        <button
-          key={r.token}
-          type="button"
-          onClick={() => pick(r.token)}
-          className={cn(
-            'flex w-full items-start gap-2.5 rounded-lg border px-3 py-2.5 text-left transition-colors',
-            token === r.token ? 'border-teal-500 bg-teal-50/50' : 'border-slate-200 hover:bg-slate-50'
-          )}
-        >
-          <span
-            className={cn(
-              'mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2',
-              token === r.token ? 'border-teal-600' : 'border-slate-300'
-            )}
-          >
-            {token === r.token && <span className="h-1.5 w-1.5 rounded-full bg-teal-600" />}
-          </span>
-          <span className="min-w-0">
-            <span className="block text-[13px] font-medium text-navy-800">{r.label}</span>
-            <span className="mt-0.5 block text-[12px] leading-relaxed text-navy-400">{r.description}</span>
-          </span>
-        </button>
-      ))}
-      <p className="pt-1 text-[12px] leading-relaxed text-navy-400">
-        Every request carries this role. Permission is checked and an audit entry written before any answer is
-        returned — so switching here genuinely changes what the API will hand back.
-      </p>
-    </div>
-  );
-}
-
 export function SystemPage() {
   const toast = useToast();
   const [tab, setTab] = useState('access');
-  const [roleNonce, setRoleNonce] = useState(0);
   const [authRef, setAuthRef] = useState('');
   const [preview, setPreview] = useState(null);
   const [previewing, setPreviewing] = useState(null);
   const [exporting, setExporting] = useState(false);
   const [reloading, setReloading] = useState(false);
 
-  const me = useCnaResource(() => cnaService.me(), [roleNonce]);
-  const security = useCnaResource(() => cnaService.getSecurity(), [roleNonce]);
-  const stats = useCnaResource(() => cnaService.getStats(), [roleNonce]);
-  const audit = useCnaResource(() => cnaService.getAudit(200), [roleNonce], { enabled: tab === 'audit' });
-  const verify = useCnaResource(() => cnaService.verifyAudit(), [roleNonce], { enabled: tab === 'audit' });
-  const integrations = useCnaResource(() => cnaService.getIntegrations(), [roleNonce], {
+  const me = useCnaResource(() => cnaService.me(), []);
+  const security = useCnaResource(() => cnaService.getSecurity(), []);
+  const stats = useCnaResource(() => cnaService.getStats(), []);
+  const audit = useCnaResource(() => cnaService.getAudit(200), [], { enabled: tab === 'audit' });
+  const verify = useCnaResource(() => cnaService.verifyAudit(), [], { enabled: tab === 'audit' });
+  const integrations = useCnaResource(() => cnaService.getIntegrations(), [], {
     enabled: tab === 'integrations',
   });
-
-  function onRoleChange() {
-    setRoleNonce((n) => n + 1);
-    setPreview(null);
-    toast.info('Role switched', 'Every subsequent request is made as the new principal.');
-  }
 
   async function fetchPreview(key) {
     setPreviewing(key);
@@ -162,10 +110,11 @@ export function SystemPage() {
       {tab === 'access' && (
         <div className="grid gap-5 lg:grid-cols-2">
           <Card>
-            <CardHeader title="Acting as" subtitle="Switch role to see access control behave differently." />
+            <CardHeader
+              title="Acting as"
+              subtitle="Your role is resolved by the backend from your verified sign-in — it cannot be chosen per request."
+            />
             <CardBody className="space-y-4">
-              <RoleSwitcher onChange={onRoleChange} />
-
               {me.loading && !me.data ? (
                 <AnalysisSkeleton rows={2} />
               ) : me.error ? (
@@ -440,8 +389,8 @@ export function SystemPage() {
         <div className="space-y-5">
           <Card>
             <CardHeader
-              title="Graph storage"
-              subtitle="One module knows the storage engine, so Neo4j is a swap rather than a rewrite."
+              title="Graph intelligence"
+              subtitle="Computed in-process with NetworkX over the relational data — one module knows the export format."
               actions={
                 <div className="flex items-center gap-2">
                   <Button variant="outline" size="sm" icon={RefreshCw} loading={reloading} onClick={rerunPipeline}>
@@ -462,12 +411,6 @@ export function SystemPage() {
                 <div className="space-y-2.5">
                   <div className="flex flex-wrap gap-1.5">
                     <Badge variant="teal">Active: {backends?.active}</Badge>
-                    <Badge variant={backends?.neo4j_driver_installed ? 'success' : 'neutral'}>
-                      neo4j driver {backends?.neo4j_driver_installed ? 'installed' : 'not installed'}
-                    </Badge>
-                    <Badge variant={backends?.neo4j_configured ? 'success' : 'neutral'}>
-                      {backends?.neo4j_configured ? 'Neo4j configured' : 'Neo4j not configured'}
-                    </Badge>
                     {(backends?.available_exports || []).map((x) => (
                       <Badge key={x} variant="neutral">
                         export: {x}

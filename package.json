@@ -3,21 +3,25 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "NEXUS \u2014 investigation intelligence platform frontend (foundation build).",
+  "description": "NEXUS — investigation intelligence platform frontend (foundation build).",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "demo:case": "node scripts/generateDemoCase.mjs && cp docs/demo/NEXUS_demo_case_missing_person.pdf docs/demo/tower_dump.csv public/demo/"
+    "demo:case": "node scripts/generateDemoCase.mjs && cp docs/demo/NEXUS_demo_case_missing_person.pdf docs/demo/tower_dump.csv public/demo/",
+    "test:frontend-sanity": "node scripts/frontend-sanity.mjs",
+    "test:frontend-auth": "node scripts/frontend-auth-flow.mjs"
   },
   "dependencies": {
     "@fontsource-variable/ibm-plex-sans": "^5.3.0",
     "@fontsource-variable/noto-sans-devanagari": "^5.3.0",
     "@fontsource/ibm-plex-mono": "^5.3.0",
+    "@supabase/supabase-js": "^2.109.0",
     "axios": "^1.7.7",
     "clsx": "^2.1.1",
     "d3": "^7.9.0",
     "d3-force": "^3.0.0",
+    "dagre": "^0.8.5",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.441.0",
     "pdfjs-dist": "^4.7.76",

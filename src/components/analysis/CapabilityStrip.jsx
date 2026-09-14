@@ -50,11 +50,9 @@ function rows(caps) {
     },
     {
       key: 'graph',
-      label: 'Graph storage',
-      on: Boolean(caps.graph_backends?.neo4j_configured),
-      detail: caps.graph_backends?.neo4j_configured
-        ? 'Live Neo4j'
-        : `${caps.graph_backends?.active || 'in-process'} — exports: ${(caps.graph_backends?.available_exports || []).join(', ')}`,
+      label: 'Graph intelligence',
+      on: Boolean(caps.graph_backends?.active),
+      detail: `${caps.graph_backends?.active || 'in-process'} — exports: ${(caps.graph_backends?.available_exports || []).join(', ')}`,
     },
     {
       key: 'integrations',

@@ -29,18 +29,83 @@ export function computeNetworkLayout(entities = [], relationships = []) {
     .stop()
     .tick(160);
 
+  // Compute connectivity degree
   const degree = {};
   relationships.forEach((r) => {
     degree[r.sourceId] = (degree[r.sourceId] || 0) + 1;
     degree[r.targetId] = (degree[r.targetId] || 0) + 1;
   });
 
+  // Scale node sizes based on degree (bounded)
+  const maxDegree = Math.max(...Object.values(degree), 1);
+  const sizeScale = (d) => {
+    const t = Math.log1p(d) / Math.log1p(maxDegree);
+    const minW = 140, maxW = 240;
+    const minH = 44, maxH = 80;
+    return { width: minW + t * (maxW - minW), height: minH + t * (maxH - minH) };
+  };
+
   return {
-    nodes: nodes.map((n) => ({ ...n.entity, x: n.x, y: n.y, degree: degree[n.id] || 0 })),
+    nodes: nodes.map((n) => {
+      const deg = degree[n.id] || 0;
+      const { width, height } = sizeScale(deg);
+      return { ...n.entity, x: n.x, y: n.y, degree: deg, width, height };
+    }),
     links: links.map((l) => ({
       ...l.rel,
       sourceId: typeof l.source === 'object' ? l.source.id : l.source,
       targetId: typeof l.target === 'object' ? l.target.id : l.target,
     })),
   };
+}
+
+/**
+ * Compute a hierarchical layout using dagre.
+ * Nodes are placed according to a top‑down flow, useful for directed graphs.
+ */
+export function computeHierarchicalLayout(entities = [], relationships = []) {
+  // Lazy‑load dagre to avoid bundling it when not needed.
+  const dagre = require('dagre');
+  const g = new dagre.graphlib.Graph();
+  g.setGraph({ rankdir: 'TB', marginx: 20, marginy: 20 });
+  g.setDefaultEdgeLabel(() => ({}));
+
+  // Compute degree map for dynamic node sizing
+  const degree = {};
+  relationships.forEach((r) => {
+    degree[r.sourceId] = (degree[r.sourceId] || 0) + 1;
+    degree[r.targetId] = (degree[r.targetId] || 0) + 1;
+  });
+  const maxDegree = Math.max(...Object.values(degree), 1);
+  const sizeScale = (d) => {
+    const t = Math.log1p(d) / Math.log1p(maxDegree);
+    const minW = 140, maxW = 240;
+    const minH = 44, maxH = 80;
+    return { width: minW + t * (maxW - minW), height: minH + t * (maxH - minH) };
+  };
+  // Add nodes with scaled sizes.
+  entities.forEach((e) => {
+    const deg = degree[e.id] || 0;
+    const { width, height } = sizeScale(deg);
+    g.setNode(e.id, { width, height, label: e.name });
+  });
+
+  // Add edges.
+  relationships.forEach((r) => {
+    g.setEdge(r.sourceId, r.targetId, { id: r.id, label: r.type });
+  });
+
+  dagre.layout(g);
+
+  const nodes = entities.map((e) => {
+    const n = g.node(e.id);
+    return { ...e, x: n.x, y: n.y };
+  });
+
+  const links = relationships.map((r) => {
+    const e = g.edge(r.sourceId, r.targetId);
+    return { ...r, sourceId: r.sourceId, targetId: r.targetId };
+  });
+
+  return { nodes, links };
 }

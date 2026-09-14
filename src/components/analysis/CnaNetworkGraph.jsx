@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useEffect, useRef } from 'react';
 import ReactFlow, { Background, Controls, Handle, Position } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { forceCenter, forceCollide, forceLink, forceManyBody, forceSimulation } from 'd3-force';
@@ -127,6 +127,14 @@ export function CnaNetworkGraph({
 }) {
   const positioned = useMemo(() => layoutOf(nodes, edges), [nodes, edges]);
 
+  // Capture the React Flow instance via onInit and fit view after layout
+  const flowInstance = useRef(null);
+  useEffect(() => {
+    if (positioned.length && nodes.length && flowInstance.current) {
+      flowInstance.current.fitView({ padding: 0.1 });
+    }
+  }, [positioned, nodes]);
+
   const rfNodes = useMemo(
     () =>
       positioned
@@ -178,16 +186,15 @@ export function CnaNetworkGraph({
         nodes={rfNodes}
         edges={rfEdges}
         nodeTypes={nodeTypes}
-        fitView
-        minZoom={0.12}
-        maxZoom={1.8}
-        onlyRenderVisibleElements
+        // remove onlyRenderVisibleElements to ensure nodes render before fitView
+        // fitView will be called after layout via effect below
         proOptions={{ hideAttribution: true }}
         nodesDraggable={false}
         nodesConnectable={false}
         onNodeClick={(_, n) => onSelectNode?.(n.id)}
         onEdgeClick={(_, e) => onSelectEdge?.(e.data)}
         onPaneClick={() => onSelectNode?.(null)}
+        onInit={instance => { flowInstance.current = instance; }}
       >
         <Background gap={18} color="var(--viz-grid)" />
         <Controls showInteractive={false} />

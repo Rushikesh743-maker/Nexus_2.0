@@ -1716,8 +1716,6 @@ async function systemMd() {
     `\n\n${c.summariser.guard_rails.map(g => `- ${g}`).join('\n')}\n\n` +
     `## Graph storage\n\n| | |\n|---|---|\n` +
     `| Active engine | ${c.graph_backends.active} |\n` +
-    `| Neo4j driver installed | ${yes(c.graph_backends.neo4j_driver_installed)} |\n` +
-    `| Neo4j configured | ${yes(c.graph_backends.neo4j_configured)} |\n` +
     `| Exports available | ${c.graph_backends.available_exports.join(', ')} |\n\n` +
     `${c.graph_backends.swap_path}\n\n` +
     `## Audit security\n\n| | |\n|---|---|\n` +

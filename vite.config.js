@@ -15,11 +15,17 @@ export default defineConfig({
     port: 5173,
     allowedHosts: true,
     proxy: {
+      // Platform API (FastAPI, see backend/): auth, cases, copilot — all
+      // under /api/v1 on the backend, proxied straight through.
+      '/api': {
+        target: process.env.VITE_CNA_TARGET || 'http://127.0.0.1:8001',
+        changeOrigin: true,
+      },
       // Criminal-network-analysis backend (FastAPI, see backend/).
-      // Namespaced away from `/api` so it can never collide with the future
-      // NEXUS REST backend that the mock switch targets.
+      // Namespaced away from `/api` so it can never collide with the
+      // platform REST surface.
       '/cna-api': {
-        target: process.env.VITE_CNA_TARGET || 'http://127.0.0.1:8000',
+        target: process.env.VITE_CNA_TARGET || 'http://127.0.0.1:8001',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/cna-api/, '/api'),
       },

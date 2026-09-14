@@ -1,0 +1,5 @@
+call_id,timestamp,caller,caller_name,callee,callee_name,duration_s,cell_tower,case_ref
+CDR-001,03/05/2026 08:41:12,9822044117,Vikram Rao,9000000001,Suresh Kulkarni,124,Kurla Tower 4,CASE-2026-001
+CDR-002,03/05/2026 09:15:47,9000000001,Suresh Kulkarni,9812345678,Deepak Menon,302,Kurla Tower 4,
+CDR-003,04/05/2026 11:02:33,9812345678,Deepak Menon,9000000002,Ramesh Gupta,95,Dadar Tower 9,
+CDR-004,04/05/2026 18:20:05,9000000002,Ramesh Gupta,9822044117,Vikram Rao,41,Dadar Tower 9,

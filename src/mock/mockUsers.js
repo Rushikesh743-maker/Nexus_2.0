@@ -1,37 +1,16 @@
 /**
  * Mock personnel directory.
  * ─────────────────────────────────────────────────────────────────────────
- * DEVELOPMENT AUTHENTICATION ONLY.
- *
- * These records exist purely for the frontend demo (the mock branch of
- * `services/authService.js`). Production authentication MUST be served by
- * the backend identity service (set VITE_USE_MOCK_API=false) — never ship
- * these accounts or credentials in a real deployment. The login screen
- * surfaces the development account only while mock mode is active.
+ * Fictional staff used only as *data* by the standalone mock preview screens
+ * (case leads, team members, "requested by"). These are not login accounts and
+ * carry no credentials — authentication is Supabase Auth (see
+ * `services/authService.js`), and the platform backend resolves the real
+ * user. Never treat these records as identities.
  * ─────────────────────────────────────────────────────────────────────────
  */
 
-/** Shared demo password for the mock accounts below. */
-export const DEMO_PASSWORD = 'nexus2026';
-
-/**
- * Primary development account for the frontend build.
- * Clearly separated from the fictional personnel directory and from
- * production authentication (which is a backend concern).
- */
-export const DEMO_DEV_ACCOUNT = {
-  id: 'usr-demo',
-  name: 'Demo Investigator',
-  rank: '',
-  role: 'Development account',
-  unit: 'NEXUS demo workspace',
-  email: 'demo-investigator@nexus.local',
-  password: DEMO_PASSWORD,
-};
-
-/** Fictional personnel — also used as case leads and team members. */
+/** Fictional personnel — used as case leads and team members in mock data. */
 export const mockUsers = [
-  DEMO_DEV_ACCOUNT,
   {
     id: 'usr-001',
     name: 'Priya Deshmukh',
@@ -39,7 +18,6 @@ export const mockUsers = [
     role: 'Lead Investigator',
     unit: 'Cyber Crime Unit, Pune',
     email: 'priya.deshmukh@nexus.gov.in',
-    password: DEMO_PASSWORD,
   },
   {
     id: 'usr-002',
@@ -48,7 +26,6 @@ export const mockUsers = [
     role: 'Field Investigator',
     unit: 'Crime Branch, Pune',
     email: 'arjun.patil@nexus.gov.in',
-    password: DEMO_PASSWORD,
   },
   {
     id: 'usr-003',
@@ -57,7 +34,6 @@ export const mockUsers = [
     role: 'Intelligence Analyst',
     unit: 'State Intelligence Department',
     email: 'sneha.joshi@nexus.gov.in',
-    password: DEMO_PASSWORD,
   },
   {
     id: 'usr-004',
@@ -66,7 +42,6 @@ export const mockUsers = [
     role: 'Reviewing Officer',
     unit: 'Commissionerate, Mumbai',
     email: 'vikas.rane@nexus.gov.in',
-    password: DEMO_PASSWORD,
   },
 ];
 

@@ -1,5 +1,5 @@
 """
-Role-based access control and a tamper-evident audit trail.
+Role-based access control and a tamper-evident audit trail (analysis pipeline).
 
 In a law-enforcement system the audit log is not a nice-to-have. Who asked
 which question about whom, and when, is itself evidence - of proper conduct or
@@ -16,9 +16,13 @@ of misuse. Two properties follow from that:
   encrypted with AES-256-GCM at rest. The chain hashes the ciphertext, so
   integrity can be verified by someone who cannot read the contents.
 
-The demo ships with static tokens so it runs with no identity provider. A
-deployment replaces `USERS` with the agency directory (LDAP / SSO) without
-touching the permission model.
+Identity is provided by **Supabase Auth** (the same identity the platform API
+uses). `current_user` verifies the Supabase access token, resolves the
+Supabase user UUID to the NEXUS user, and maps the NEXUS role onto this
+pipeline's two principals (``investigator`` / ``admin``). There are no static
+demo tokens and no authentication bypass: a request without a valid Supabase
+token is rejected (401), and the role is taken from the database, never from
+the client.
 """
 
 from __future__ import annotations
@@ -30,7 +34,14 @@ import os
 import threading
 from datetime import datetime, timezone
 
-from fastapi import Header, HTTPException
+from fastapi import Depends, Header, HTTPException
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from .core.database import get_db
+from .core.errors import unauthenticated
+from .models import User
+from .security.supabase_auth import verify_supabase_bearer
 
 ROLES = {
     # role         permissions
@@ -44,14 +55,6 @@ ROLES = {
     "admin":        {"graph:read", "entity:read", "evidence:read", "query:run",
                      "report:generate", "audit:read", "analytics:tune",
                      "data:submit", "data:ingest", "user:manage"},
-}
-
-# Demo credentials only. Replace with the agency identity provider.
-USERS = {
-    "demo-investigator": {"name": "PSI A. Kulkarni", "role": "investigator",
-                          "unit": "Anti Narcotics Cell", "badge": "ANC-2291"},
-    "demo-admin":        {"name": "System Administrator", "role": "admin",
-                          "unit": "IT", "badge": "IT-001"},
 }
 
 AUDIT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -148,11 +151,66 @@ class Principal:
                 "badge": self.badge, "permissions": sorted(self.permissions)}
 
 
-def current_user(x_auth_token: str = Header(default="demo-investigator")) -> Principal:
-    info = USERS.get(x_auth_token)
-    if not info:
-        raise HTTPException(status_code=401, detail="Unknown or missing access token")
-    return Principal(x_auth_token, info)
+def current_user(authorization: str | None = Header(default=None),
+                 db: "Session" = Depends(get_db)) -> Principal:
+    """Resolve the caller from the verified Supabase identity.
+
+    The Supabase access token is verified (signature + issuer + audience +
+    expiry), the Supabase user UUID is mapped to the NEXUS user, and the
+    NEXUS role is mapped onto this pipeline's two principals. A missing or
+    invalid token, or a Supabase identity with no NEXUS profile, is a 401.
+    The role is taken from the database — never from the client.
+    """
+    claims = verify_supabase_bearer(authorization)   # 401 if missing/invalid
+    import uuid as _uuid
+
+    sub_val = claims.get("sub")
+    try:
+        sub_uuid = _uuid.UUID(str(sub_val)) if sub_val else None
+    except (ValueError, TypeError):
+        sub_uuid = None
+
+    if sub_uuid is None:
+        unauthenticated()
+
+    user = db.scalars(
+        select(User).where(User.supabase_id == sub_uuid)).first()
+    if user is None and claims.get("email"):
+        email = claims.get("email")
+        user = db.scalars(select(User).where(User.email == email)).first()
+        if user is not None:
+            user.supabase_id = sub_uuid
+            db.commit()
+            db.refresh(user)
+
+    if user is None and claims.get("email"):
+        email = claims.get("email")
+        user_meta = claims.get("user_metadata") or {}
+        name = user_meta.get("full_name") or user_meta.get("name") or (email.split("@")[0] if email else "Investigator")
+        user = User(
+            supabase_id=sub_uuid,
+            email=email,
+            name=name,
+            role="INVESTIGATOR",
+            is_active=True,
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+    if user is None or not user.is_active:
+        unauthenticated()
+    # Map the NEXUS role onto the pipeline's two principals. Only ADMIN gets
+    # the elevated (admin) permissions; every other NEXUS role is an
+    # investigator. The role is authoritative from the database.
+    legacy_role = "admin" if user.role == "ADMIN" else "investigator"
+    info = {
+        "name": user.name,
+        "role": legacy_role,
+        "unit": "",
+        "badge": user.officer_id or "",
+    }
+    return Principal(claims.get("sub") or "", info)
 
 
 def require(principal: Principal, permission: str):

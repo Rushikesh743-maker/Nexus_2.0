@@ -5,14 +5,30 @@ networkx>=3.0
 pydantic>=2.0
 python-multipart>=0.0.9   # multipart form uploads for case intake
 
+# Platform foundation (v1 API): PostgreSQL + JWT + graph layer
+sqlalchemy>=2.0            # ORM for the application data layer
+psycopg[binary]>=3.1       # PostgreSQL driver
+pydantic-settings>=2.2     # .env-backed configuration
+pyjwt>=2.8                 # access tokens
+email-validator>=2.0     # EmailStr in schemas
+bcrypt>=4.0                # password hashing
+pypdf>=4.0                 # PDF text extraction for document ingestion
+
 # Recommended - each of these unlocks a capability, and the system degrades to a
 # stated fallback (visible in the System view) when one is absent.
 reportlab>=4.0        # court-ready PDF case files
 cryptography>=42.0    # AES-256-GCM encryption of the audit log at rest
 pillow>=10.0          # scanned-document handling
 pytesseract>=0.3.10   # OCR of scanned FIRs (also needs the tesseract binary)
+pymupdf>=1.24         # PDF page rasterization for OCR of scanned PDF pages
+boto3>=1.34           # S3-compatible object storage backend (STORAGE_BACKEND=s3)
 
 # Optional
 # spacy>=3.7          # transformer NER; the rule extractor is the fallback
 # scipy>=1.11         # faster PageRank; a pure-Python implementation is built in
-# neo4j>=5.0          # write the graph to a live Neo4j instance
+
+# Development
+pytest>=8.0
+httpx>=0.27           # Starlette TestClient dependency (API test suite)
+alembic>=1.13         # database migrations (schema evolution without recreation)
+moto>=5.0             # in-memory S3 for storage-backend tests

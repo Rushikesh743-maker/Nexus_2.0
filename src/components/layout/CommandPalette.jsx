@@ -31,12 +31,15 @@ export function openCommandPalette() {
 }
 
 const RESULT_GROUPS = [
-  { key: 'investigations', label: 'Investigations', icon: Briefcase },
+  { key: 'cases', label: 'Cases & Investigations', icon: Briefcase },
   { key: 'entities', label: 'Entities', icon: Share2 },
   { key: 'evidence', label: 'Evidence', icon: FolderOpen },
-  { key: 'events', label: 'Events', icon: History },
-  { key: 'locations', label: 'Locations', icon: MapPin },
+  { key: 'documents', label: 'Documents', icon: FolderOpen },
   { key: 'relationships', label: 'Relationships', icon: Link2 },
+  { key: 'findings', label: 'Graph Findings', icon: Radar },
+  { key: 'hypotheses', label: 'Hypotheses', icon: Radar },
+  { key: 'locations', label: 'Locations', icon: MapPin },
+  { key: 'events', label: 'Timeline Events', icon: History },
 ];
 
 /**

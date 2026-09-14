@@ -21,3 +21,4 @@ exports/
 # Runtime audit log written by backend/app/auth.py
 audit_log.jsonl
 backend/audit_log.jsonl
+backend/storage/

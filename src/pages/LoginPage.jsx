@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Lock, ArrowRight } from 'lucide-react';
+import { Eye, EyeOff, Lock, AlertTriangle } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-import { authService, USE_MOCK_API } from '@/services';
+import { authService } from '@/services';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
 /**
@@ -47,24 +47,20 @@ export function LoginPage() {
     setLoading(true);
     try {
       const user = await login(email, password);
-      const first = user.name.split(' ')[0];
-      toast.success(
-        `Welcome back, ${first.toLowerCase() === 'demo' ? 'Investigator' : first}`,
-        'Demo session started (mock authentication).'
-      );
+      const first = (user?.name || 'Investigator').split(' ')[0];
+      toast.success(`Welcome back, ${first}`, 'Signed in to the platform.');
       navigate(from, { replace: true });
     } catch (err) {
-      setError(err.message || 'Sign-in failed.');
+      // Show detailed Supabase auth error for debugging
+      const baseMsg = err.message || 'Sign-in failed.';
+      const parts = [];
+      if (err.code) parts.push(`code: ${err.code}`);
+      if (err.status) parts.push(`status: ${err.status}`);
+      const detailedMsg = parts.length ? `${baseMsg} (${parts.join(', ')})` : baseMsg;
+      setError(detailedMsg);
     } finally {
       setLoading(false);
     }
-  };
-
-  const fillDemo = () => {
-    const demo = authService.getDemoCredentials();
-    setEmail(demo.email);
-    setPassword(demo.password);
-    setError('');
   };
 
   return (
@@ -144,24 +140,14 @@ export function LoginPage() {
               Use your department account to open the workspace.
             </p>
 
-            {USE_MOCK_API && (
-              <div className="mt-7 rounded-md border border-line bg-slate-50 p-3.5">
-                <p className="label-micro text-navy-500">Development environment</p>
-                <p className="mt-2 text-[12px] leading-relaxed text-navy-500">
-                  Authentication is handled by the frontend mock service — nothing is sent to a server. Production
-                  sign-in requires the department identity service.
+            {!authService.isSupabaseReady() && (
+              <div className="mt-7 flex items-start gap-2.5 rounded-md border border-amber-300 bg-amber-50 p-3.5">
+                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" aria-hidden />
+                <p className="text-[12px] leading-relaxed text-amber-800">
+                  Sign-in is not configured. Set <code className="font-mono">VITE_SUPABASE_URL</code> and{' '}
+                  <code className="font-mono">VITE_SUPABASE_ANON_KEY</code>, create the account in Supabase Auth,
+                  and map it to a NEXUS user (see the README).
                 </p>
-                <button
-                  type="button"
-                  onClick={fillDemo}
-                  className="group mt-3 inline-flex items-center gap-1.5 text-[12px] font-medium text-navy-800 transition-colors hover:text-accent"
-                >
-                  Fill demo credentials
-                  <ArrowRight
-                    className="h-3 w-3 transition-transform duration-200 group-hover:translate-x-0.5"
-                    aria-hidden
-                  />
-                </button>
               </div>
             )}
 
@@ -201,6 +187,10 @@ export function LoginPage() {
               </Button>
             </form>
 
+            <p className="mt-4 text-center text-sm text-gray-600">
+              Don't have an account?{' '}
+              <a href="/signup" className="font-medium text-indigo-600 hover:text-indigo-500">Sign Up</a>
+            </p>
             <p className="mt-8 flex items-center justify-center gap-1.5 text-[11px] text-navy-300">
               <Lock className="h-3 w-3" aria-hidden />
               Secure investigation environment · authorised demo use only

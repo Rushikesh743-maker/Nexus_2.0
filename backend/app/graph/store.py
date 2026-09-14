@@ -1,19 +1,17 @@
 """
 Graph storage adapters.
 
-The prototype computes on NetworkX because that needs no database installed,
-which is the right call for a demo but the wrong call for agency-scale data.
-This module is the seam: `GraphStore` defines the contract, and the same graph
-can be written to Cypher, to a live Neo4j instance, or anywhere else, without
-the ingestion, analytics or API layers knowing which.
+The prototype computes on NetworkX (in-process, over the relational data),
+which is the whole graph-intelligence story: there is no graph database to
+install or run. This module is the *export* seam: `GraphStore` defines the
+contract, and the same in-memory graph can be written to Cypher or JSON —
+without the ingestion, analytics or API layers knowing which.
 
-Three implementations ship:
+Two implementations ship:
 
-* `CypherExportStore` - writes a .cypher script. Needs nothing installed, and
-  is the honest way to demonstrate Neo4j support without requiring a server on
-  a hackathon laptop. The output loads into Neo4j Desktop or Aura unchanged.
-* `Neo4jStore` - writes to a live instance via the official driver when it is
-  installed and NEO4J_URI is configured.
+* `CypherExportStore` - writes a .cypher script. Needs nothing installed; the
+  output can be loaded into any Cypher-compatible tool (Neo4j Desktop, Aura,
+  ...) if you ever want one — NEXUS itself never requires a graph server.
 * `JsonExportStore` - a plain dump, useful for handing the graph to another
   tool or diffing two runs.
 
@@ -24,14 +22,13 @@ against the export reads the same as the Python.
 from __future__ import annotations
 
 import json
-import os
 from datetime import datetime
 
 SCALAR = (str, int, float, bool, type(None))
 
 
 def _clean(props: dict) -> dict:
-    """Neo4j properties must be scalars or arrays of scalars."""
+    """Graph-store properties must be scalars or arrays of scalars."""
     out = {}
     for k, v in (props or {}).items():
         if isinstance(v, SCALAR):
@@ -150,47 +147,6 @@ class JsonExportStore(GraphStore):
                 "nodes": len(self.data["nodes"]), "edges": len(self.data["edges"])}
 
 
-# ----------------------------------------------------------------- Neo4j
-
-class Neo4jStore(GraphStore):
-    name = "neo4j"
-
-    def __init__(self, uri=None, user=None, password=None, database=None):
-        self.uri = uri or os.environ.get("NEO4J_URI", "bolt://localhost:7687")
-        self.user = user or os.environ.get("NEO4J_USER", "neo4j")
-        self.password = password or os.environ.get("NEO4J_PASSWORD", "")
-        self.database = database or os.environ.get("NEO4J_DATABASE", "neo4j")
-        from neo4j import GraphDatabase          # raises if not installed
-        self.driver = GraphDatabase.driver(self.uri, auth=(self.user, self.password))
-        self.n_nodes = self.n_edges = 0
-
-    @staticmethod
-    def available() -> bool:
-        try:
-            import neo4j  # noqa: F401
-            return True
-        except Exception:
-            return False
-
-    def upsert_node(self, node_id, label, props):
-        with self.driver.session(database=self.database) as s:
-            s.run(f"MERGE (n:{label} {{id: $id}}) SET n += $props",
-                  id=node_id, props=_clean(props))
-        self.n_nodes += 1
-
-    def upsert_edge(self, a, b, rel_type, props):
-        with self.driver.session(database=self.database) as s:
-            s.run(f"MATCH (a {{id: $a}}), (b {{id: $b}}) "
-                  f"MERGE (a)-[r:{rel_type}]-(b) SET r += $props",
-                  a=a, b=b, props=_clean(props))
-        self.n_edges += 1
-
-    def finish(self):
-        self.driver.close()
-        return {"store": self.name, "uri": self.uri,
-                "nodes": self.n_nodes, "edges": self.n_edges}
-
-
 # ------------------------------------------------------------------ pump
 
 def export_graph(case_graph, store: GraphStore) -> dict:
@@ -216,12 +172,11 @@ def export_graph(case_graph, store: GraphStore) -> dict:
 
 def describe_backends() -> dict:
     return {
-        "active": "networkx (in-process)",
-        "reason": "no database to install; the demo runs from one command",
+        "active": "networkx (in-process, over Supabase/Postgres relational data)",
+        "reason": ("graph intelligence is computed in-process with NetworkX; "
+                   "there is no graph database to install or run"),
         "available_exports": ["cypher", "json"],
-        "neo4j_driver_installed": Neo4jStore.available(),
-        "neo4j_configured": bool(os.environ.get("NEO4J_URI")),
-        "swap_path": ("Point export_graph() at Neo4jStore, or load the Cypher "
-                      "export. Ingestion, analytics and the API are unchanged - "
-                      "only this module knows the storage engine."),
+        "swap_path": ("Point export_graph() at another GraphStore, or load the "
+                      "Cypher/JSON export. Ingestion, analytics and the API are "
+                      "unchanged — only this module knows the export format."),
     }

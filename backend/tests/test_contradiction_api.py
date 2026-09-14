@@ -10,24 +10,20 @@ import os
 import sys
 
 import pytest
-from fastapi.testclient import TestClient
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-from app.main import app  # noqa: E402
+from auth_helpers import ROLE_IDENTITIES, bearer, mint_supabase_token  # noqa: E402
 
-INVESTIGATOR = {"X-Auth-Token": "demo-investigator"}
-ADMIN = {"X-Auth-Token": "demo-admin"}
-
-
-@pytest.fixture(scope="module")
-def client():
-    with TestClient(app) as c:
-        yield c
+# `client`, `investigator` and `admin` come from conftest (Supabase tokens).
+# The analysis (legacy) endpoints are authorized by the same Supabase
+# identity; the NEXUS role maps to the pipeline's investigator/admin
+# principals.
 
 
 def test_list_returns_findings_and_config(client):
-    r = client.get("/api/contradictions", headers=INVESTIGATOR)
+    r = client.get("/api/contradictions", headers=investigator)
     assert r.status_code == 200
     body = r.json()
     assert body["total"] == len(body["items"]) > 0
@@ -39,27 +35,27 @@ def test_list_returns_findings_and_config(client):
 
 
 def test_list_reports_what_it_declined_to_flag(client):
-    body = client.get("/api/contradictions", headers=INVESTIGATOR).json()
+    body = client.get("/api/contradictions", headers=investigator).json()
     assert body["skipped"], "the engine must show where it declined to draw a conclusion"
     assert all({"check", "reason"} <= set(s) for s in body["skipped"])
 
 
 def test_filters(client):
-    all_items = client.get("/api/contradictions", headers=INVESTIGATOR).json()
-    high = client.get("/api/contradictions?severity=high", headers=INVESTIGATOR).json()
+    all_items = client.get("/api/contradictions", headers=investigator).json()
+    high = client.get("/api/contradictions?severity=high", headers=investigator).json()
     assert all(i["severity"] == "high" for i in high["items"])
     assert high["total"] <= all_items["total"]
 
     one_type = client.get("/api/contradictions?type=timeline_conflict",
-                          headers=INVESTIGATOR).json()
+                          headers=investigator).json()
     assert all(i["type"] == "timeline_conflict" for i in one_type["items"])
     assert one_type["total"] >= 1
 
 
 def test_detail_carries_full_provenance_and_documents(client):
-    listing = client.get("/api/contradictions", headers=INVESTIGATOR).json()
+    listing = client.get("/api/contradictions", headers=investigator).json()
     cid = listing["items"][0]["id"]
-    r = client.get(f"/api/contradictions/{cid}", headers=INVESTIGATOR)
+    r = client.get(f"/api/contradictions/{cid}", headers=investigator)
     assert r.status_code == 200
     body = r.json()
     assert body["id"] == cid
@@ -71,16 +67,21 @@ def test_detail_carries_full_provenance_and_documents(client):
 
 
 def test_unknown_contradiction_is_404(client):
-    assert client.get("/api/contradictions/C999", headers=INVESTIGATOR).status_code == 404
+    assert client.get("/api/contradictions/C999", headers=investigator).status_code == 404
 
 
-def test_unknown_token_is_rejected(client):
+def test_missing_or_bad_token_is_rejected(client):
     """
-    The demo deliberately defaults a missing header to `demo-investigator` so it
-    runs with no identity provider (see `app/auth.py`), so absence of a token is
-    not an error here. An unrecognised token still is.
+    The analysis endpoints are authorized by the Supabase identity: a missing
+    token is an error, and a token that cannot be verified is an error too.
+    There is no default role and no auth bypass.
     """
-    bad = {"X-Auth-Token": "not-a-real-token"}
+    # No Authorization header at all.
+    assert client.get("/api/contradictions").status_code == 401
+    assert client.get("/api/contradictions/C001").status_code == 401
+    # A bearer token that fails verification (wrong signing secret).
+    bad = bearer(mint_supabase_token(ROLE_IDENTITIES["INVESTIGATOR"]["sub"],
+                                     secret="not-the-project-secret"))
     assert client.get("/api/contradictions", headers=bad).status_code == 401
     assert client.get("/api/contradictions/C001", headers=bad).status_code == 401
 
@@ -94,35 +95,35 @@ def test_endpoints_are_permission_checked(client):
     from app.auth import ROLES
     assert "graph:read" in ROLES["investigator"]      # the listing
     assert "evidence:read" in ROLES["investigator"]   # the detail view
-    assert client.get("/api/contradictions", headers=INVESTIGATOR).status_code == 200
+    assert client.get("/api/contradictions", headers=investigator).status_code == 200
 
 
 def test_admin_sees_the_same_findings(client):
-    a = client.get("/api/contradictions", headers=INVESTIGATOR).json()
-    b = client.get("/api/contradictions", headers=ADMIN).json()
+    a = client.get("/api/contradictions", headers=investigator).json()
+    b = client.get("/api/contradictions", headers=admin).json()
     assert [i["id"] for i in a["items"]] == [i["id"] for i in b["items"]]
 
 
 def test_response_is_stable_across_calls(client):
     """Two identical requests must not renumber the findings."""
-    a = client.get("/api/contradictions", headers=INVESTIGATOR).json()
-    b = client.get("/api/contradictions", headers=INVESTIGATOR).json()
+    a = client.get("/api/contradictions", headers=investigator).json()
+    b = client.get("/api/contradictions", headers=investigator).json()
     assert a["items"] == b["items"]
 
 
 # ------------------------------------------------------- impact simulator
 
 def test_impact_requires_something_to_withhold(client):
-    assert client.get("/api/impact", headers=INVESTIGATOR).status_code == 400
+    assert client.get("/api/impact", headers=investigator).status_code == 400
 
 
 def test_impact_rejects_an_unknown_source(client):
-    r = client.get("/api/impact?source_id=NOPE/1", headers=INVESTIGATOR)
+    r = client.get("/api/impact?source_id=NOPE/1", headers=investigator)
     assert r.status_code == 404
 
 
 def test_impact_returns_a_diff(client):
-    r = client.get("/api/impact?source_id=FIR/2026/0107", headers=INVESTIGATOR)
+    r = client.get("/api/impact?source_id=FIR/2026/0107", headers=investigator)
     assert r.status_code == 200
     body = r.json()
     s = body["summary"]
@@ -133,7 +134,7 @@ def test_impact_returns_a_diff(client):
 
 def test_impact_accepts_repeated_record_ids(client):
     """The contradiction engine cites CDR rows, so the endpoint must take several."""
-    r = client.get("/api/impact?record_id=C000054&record_id=C000017", headers=INVESTIGATOR)
+    r = client.get("/api/impact?record_id=C000054&record_id=C000017", headers=investigator)
     assert r.status_code == 200
     body = r.json()
     assert sorted(body["exclude_records"]) == ["C000017", "C000054"]
@@ -142,10 +143,10 @@ def test_impact_accepts_repeated_record_ids(client):
 
 def test_impact_does_not_disturb_the_served_baseline(client):
     """A simulation must not change what the other endpoints report afterwards."""
-    before = client.get("/api/stats", headers=INVESTIGATOR).json()
-    before_c = client.get("/api/contradictions", headers=INVESTIGATOR).json()["total"]
-    client.get("/api/impact?source_id=CDR", headers=INVESTIGATOR)
-    after = client.get("/api/stats", headers=INVESTIGATOR).json()
-    after_c = client.get("/api/contradictions", headers=INVESTIGATOR).json()["total"]
+    before = client.get("/api/stats", headers=investigator).json()
+    before_c = client.get("/api/contradictions", headers=investigator).json()["total"]
+    client.get("/api/impact?source_id=CDR", headers=investigator)
+    after = client.get("/api/stats", headers=investigator).json()
+    after_c = client.get("/api/contradictions", headers=investigator).json()["total"]
     assert before == after
     assert before_c == after_c

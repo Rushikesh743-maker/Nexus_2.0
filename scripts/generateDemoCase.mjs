@@ -25,7 +25,10 @@ const ACCENT = '#0f766e';
 
 const lines = fs.readFileSync(source, 'utf8').split(/\r?\n/);
 
-const doc = new PDFDocument({ size: 'A4', margins: { top: 62, bottom: 62, left: 58, right: 58 }, info: {
+// bufferPages keeps every finished page addressable until doc.end(), so the
+// footer pass below can reach page 1 as well as the last page. Without it,
+// pdfkit flushes each page at the break and switchToPage() throws for it.
+const doc = new PDFDocument({ size: 'A4', margins: { top: 62, bottom: 62, left: 58, right: 58 }, bufferPages: true, info: {
   Title: 'NEXUS demonstration case file — NEX-2026-120',
   Author: 'NEXUS (demonstration)',
   Subject: 'Synthetic missing-person case bundle for platform demonstration',
@@ -103,14 +106,17 @@ lines.forEach((raw) => {
   doc.font('Helvetica').fontSize(9.5).fillColor(INK).text(line, { align: 'left', lineGap: 1.5 });
 });
 
-/* Footer on every page */
+/* Footer on every page. The y sits just above the bottom margin: writing
+   below it makes pdfkit start a new page, which is how a stray third page
+   used to get born. */
 const range = doc.bufferedPageRange();
+const footerY = doc.page.height - doc.page.margins.bottom - 12;
 for (let i = range.start; i < range.start + range.count; i += 1) {
   doc.switchToPage(i);
   doc.font('Helvetica').fontSize(7.5).fillColor(MUTED).text(
     `NEX-2026-120 · synthetic demonstration data · page ${i + 1} of ${range.count}`,
     doc.page.margins.left,
-    doc.page.height - 44,
+    footerY,
     { width, align: 'center' }
   );
 }

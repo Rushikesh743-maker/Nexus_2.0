@@ -15,6 +15,12 @@ const TYPE_CHIPS = [
   { id: 'bank_account', label: 'Account' },
 ];
 
+// Layout mode options for the graph
+const LAYOUT_MODES = [
+  { id: 'force', label: 'Force‑directed' },
+  { id: 'hierarchical', label: 'Hierarchical (dagre)' },
+];
+
 const REL_OPTIONS = [
   { value: 'all', label: 'All relationships' },
   ...Object.entries(RELATIONSHIP_TYPES).map(([value, meta]) => ({ value, label: meta.label })),
@@ -51,6 +57,8 @@ export function GraphControls({
   onHide,
   onReset,
   onFit,
+  layoutMode = 'force', // default layout
+  onLayoutMode,
   compact = false,
 }) {
   const highlightChips = [
@@ -87,6 +95,20 @@ export function GraphControls({
             </button>
           ))}
         </div>
+        {/* Layout mode selector */}
+        <Select
+          value={layoutMode || 'force'}
+          onChange={(e) => onLayoutMode(e.target.value)}
+          className="w-44"
+          aria-label="Select graph layout"
+        >
+          {LAYOUT_MODES.map((mode) => (
+            <option key={mode.id} value={mode.id}>
+              {mode.label}
+            </option>
+          ))}
+        </Select>
+
         {!compact && (
           <>
             <div className="w-44">

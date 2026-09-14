@@ -197,9 +197,10 @@ Change the role to **Administrator**, click Audit log again.
 ## 8:20 — Close (20s)
 
 > "It runs offline on one command with no database and no model download.
-> `scripts/export_graph.py` writes the whole graph as Cypher for Neo4j, and the
-> extractor swaps to IndicNER behind an interface that's already there. And it
-> never asserts anything it can't show you the record for."
+> `scripts/export_graph.py` writes the whole graph as Cypher — loadable into
+> Neo4j if you ever want one — and the extractor swaps to IndicNER behind an
+> interface that's already there. And it never asserts anything it can't show
+> you the record for."
 
 ---
 
@@ -238,8 +239,10 @@ partition kept. `scripts/verify.py` asserts identical output across separate
 processes.
 
 **"How does it scale?"** Analytics are the bottleneck — betweenness is O(VE).
-At agency scale you move to Neo4j with GDS and compute centrality as a batch
-job. `graph/store.py` is the only module that knows the storage engine.
+At agency scale you move the heavy analytics to a batch job (or a graph
+database if one is wanted) and cache the expensive results back in the
+relational store. `graph/store.py` is the only module that knows the export
+format.
 
 **"Why no React?"** Because it needs to work when the venue wifi doesn't —
 no CDN, no build step, no npm. The force-directed layout, the canvas renderer

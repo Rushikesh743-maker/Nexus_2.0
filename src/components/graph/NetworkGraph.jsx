@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import ReactFlow, { Background, Controls } from 'reactflow';
 import 'reactflow/dist/style.css';
 import EntityNode from './EntityNode';
-import { computeNetworkLayout } from './layout';
+import { computeNetworkLayout, computeHierarchicalLayout } from './layout';
 import { RELATIONSHIP_TYPES } from '@/lib/constants';
 
 const nodeTypes = { entity: EntityNode };
@@ -35,11 +35,15 @@ export function NetworkGraph({
   onSelect,
   onEdgeSelect,
   height = 'h-[480px]',
+  layoutMode = 'force', // 'force' or 'hierarchical'
 }) {
-  const layout = useMemo(
-    () => computeNetworkLayout([...entities, ...evidenceNodes], [...relationships, ...evidenceEdges]),
-    [entities, relationships, evidenceNodes, evidenceEdges]
-  );
+  const layout = useMemo(() => {
+    if (layoutMode === 'hierarchical') {
+      return computeHierarchicalLayout([...entities, ...evidenceNodes], [...relationships, ...evidenceEdges]);
+    }
+    // default to force‑directed layout
+    return computeNetworkLayout([...entities, ...evidenceNodes], [...relationships, ...evidenceEdges]);
+  }, [entities, relationships, evidenceNodes, evidenceEdges, layoutMode]);
 
   const nodes = useMemo(
     () =>
